@@ -7,7 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// 1. Serve tutti i file statici dalla cartella principale (root)
+app.use(express.static(__dirname));
+
+// 2. Definisce la rotta radice caricando index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 io.on('connection', (socket) => {
     socket.on('join_room', ({ username, roomCode }) => {
