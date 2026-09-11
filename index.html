@@ -85,7 +85,7 @@
         .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .chat-msg { background: #2a2a2a; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* SEARCH BAR, FILTRI & CARICAMENTO LISTONE */
+        /* SEARCH BAR & DATALIST */
         .search-bar, .filter-select {
             width: 100%; padding: 10px; border-radius: 6px;
             border: 1px solid #333; background: #2a2a2a; color: #fff; margin-bottom: 15px;
@@ -148,7 +148,9 @@
         
         <!-- SEZIONE 1: LIVE ASTA -->
         <div id="live" class="section active">
-            <input type="text" class="search-bar" placeholder="🔍 Cerca e chiama giocatore...">
+            <!-- Barra di ricerca con Autocomplete (datalist) -->
+            <input type="text" class="search-bar" id="live-search-input" list="players-datalist" placeholder="🔍 Cerca e chiama giocatore..." onchange="selectPlayerToAuction()" onkeydown="handleSearchKeyPress(event)">
+            <datalist id="players-datalist"></datalist>
             
             <div class="live-grid">
                 <!-- Giocatore In Asta -->
@@ -184,7 +186,7 @@
                         <div class="chat-msg"><b>Sistema:</b> Stanza creata. Inizia l'asta!</div>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff;">
+                        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff;" onkeydown="if(event.key==='Enter') sendChat()">
                         <button class="btn" style="width: auto; padding: 8px 12px;" onclick="sendChat()">Invia</button>
                     </div>
                 </div>
@@ -301,6 +303,50 @@
             document.getElementById('auth-section').style.display = 'none';
             document.getElementById('app-section').style.display = 'block';
             filterListone();
+            updateDatalist();
+        }
+
+        // --- AGGIORNAMENTO DATALIST AUTOCOMPLETE ---
+        function updateDatalist() {
+            const datalist = document.getElementById('players-datalist');
+            datalist.innerHTML = "";
+            playersList.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.name;
+                option.label = `${p.team} (${p.role}) - FVM: ${p.fvm}`;
+                datalist.appendChild(option);
+            });
+        }
+
+        // --- SELEZIONE E CHIAMATA GIOCATORE IN ASTA ---
+        function selectPlayerToAuction() {
+            const inputVal = document.getElementById('live-search-input').value.trim();
+            const found = playersList.find(p => p.name.toLowerCase() === inputVal.toLowerCase());
+
+            if (found) {
+                currentPlayer = found;
+                document.getElementById('player-name').innerText = found.name;
+                
+                const roleMap = { 'P': 'Portiere', 'D': 'Difensore', 'C': 'Centrocampista', 'A': 'Attaccante' };
+                const roleName = roleMap[found.role] || found.role;
+                
+                document.getElementById('player-team').innerText = `${found.team} - ${roleName} (${found.role})`;
+                
+                // Reset della chiamata d'asta
+                currentBid = 1;
+                document.getElementById('current-bid').innerText = "1 FM";
+                document.getElementById('bid-input').value = "1";
+                document.getElementById('highest-bidder').innerText = "Nessuno";
+
+                addChatMessage("Sistema", `📣 Chiamato in asta: ${found.name} (${found.team})`);
+                document.getElementById('live-search-input').value = ""; // Pulisce il campo
+            }
+        }
+
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                selectPlayerToAuction();
+            }
         }
 
         // --- CARICAMENTO LISTONE PERSONALIZZATO ---
@@ -316,7 +362,7 @@
                     if (file.name.endsWith('.json')) {
                         playersList = JSON.parse(content);
                     } else {
-                        // Tratta come CSV / TXT (Nome,Squadra,Ruolo,FVM)
+                        // CSV / TXT (Nome,Squadra,Ruolo,FVM)
                         const lines = content.split('\n');
                         const parsed = [];
                         
@@ -340,8 +386,9 @@
                     }
                     alert(`Caricati ${playersList.length} giocatori con successo!`);
                     filterListone();
+                    updateDatalist();
                 } catch (err) {
-                    alert("Errore nella lettura del file. Assicurati che sia in formato JSON valido o CSV (Nome,Squadra,Ruolo,FVM).");
+                    alert("Errore nella lettura del file. Assicurati che sia in formato JSON o CSV (Nome,Squadra,Ruolo,FVM).");
                 }
             };
 
@@ -351,6 +398,7 @@
         function resetDefaultListone() {
             playersList = [...defaultPlayers];
             filterListone();
+            updateDatalist();
             alert("Listone ripristinato a quello di default.");
         }
 
