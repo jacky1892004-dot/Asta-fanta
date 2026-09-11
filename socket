@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asta Fantacalcio Live</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        #chat-box { height: 150px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fafafa; }
+        input, button, select { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Asta Fantacalcio Live</h2>
+
+    <!-- LOGIN / STANZA -->
+    <div id="login-section" class="section">
+        <h3>Accedi alla Stanza</h3>
+        <input type="text" id="username" placeholder="Inserisci il tuo nome">
+        <input type="text" id="roomCode" placeholder="Codice Stanza (es. fanta123)">
+        <button onclick="entraInStanza()">Entra</button>
+    </div>
+
+    <!-- AREA ASTA E CHAT -->
+    <div id="auction-section" class="section hidden">
+        <h3 id="room-title">Stanza: </h3>
+
+        <!-- Giocatore e Offerta Corrente -->
+        <div style="background: #e9ecef; padding: 10px; border-radius: 5px; text-align: center;">
+            <h4 id="current-player">Seleziona un giocatore</h4>
+            <p>Offerta massima: <strong id="current-bid">0</strong> FM da <strong id="current-user">-</strong></p>
+        </div>
+
+        <!-- Form Offerta -->
+        <h4>Fai un'offerta</h4>
+        <select id="player-select">
+            <!-- I giocatori vengono caricati via JS -->
+        </select>
+        <input type="number" id="bid-amount" placeholder="Valore offerta" min="1">
+        <button onclick="inviaRilancio()">Rilancia</button>
+
+        <hr>
+
+        <!-- Chat Live -->
+        <h4>Chat Stanza</h4>
+        <div id="chat-box"></div>
+        <input type="text" id="chat-input" placeholder="Scrivi un messaggio...">
+        <button onclick="inviaMessaggioChat()">Invia</button>
+    </div>
+</div>
+
+<!-- Libreria client Socket.IO fornita dal server Node.js -->
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    // 1. INIZIALIZZAZIONE
+    const socket = io();
+    let currentUser = "";
+    let currentRoom = "";
+
+    // Array dei giocatori (estratto di esempio con i tuoi dati JSON)
+    const defaultPlayers = [
+        {"name": "MALEN", "team": "ROM", "role": "A", "fvm": 60},
+        {"name": "MARTINEZ", "team": "INT", "role": "A", "fvm": 56},
+        {"name": "HOJLUND", "team": "NAP", "role": "A", "fvm": 49},
+        {"name": "THURAM", "team": "INT", "role": "A", "fvm": 47},
+        {"name": "DYBALA", "team": "ROM", "role": "A", "fvm": 38}
+    ];
+
+    // Carica la lista dei giocatori nel menu a tendina
+    const selectEl = document.getElementById('player-select');
+    defaultPlayers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = `${p.name} (${p.team}) - FVM: ${p.fvm}`;
+        selectEl.appendChild(opt);
+    });
+
+    // 2. FUNZIONE PER ENTRARE NELLA STANZA
+    function entraInStanza() {
+        currentUser = document.getElementById('username').value.trim();
+        currentRoom = document.getElementById('roomCode').value.trim();
+
+        if (!currentUser || !currentRoom) {
+            alert("Inserisci sia il nome che il codice della stanza!");
+            return;
+        }
+
+        // Invia l'evento di ingresso al server
+        socket.emit('join_room', { username: currentUser, roomCode: currentRoom });
+
+        // Aggiorna la vista
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('auction-section').classList.remove('hidden');
+        document.getElementById('room-title').innerText = `Stanza: ${currentRoom} (Utente: ${currentUser})`;
+    }
+
+    // 3. FUNZIONI PER INVIARE AZIONI
+    function inviaRilancio() {
+        const player = document.getElementById('player-select').value;
+        const bid = parseInt(document.getElementById('bid-amount').value);
+
+        if (!bid || bid <= 0) {
+            alert("Inserisci un'offerta valida!");
+            return;
+        }
+
+        // Invia l'offerta al server Socket.IO
+        socket.emit('place_bid', {
+            roomCode: currentRoom,
+            player: player,
+            bid: bid,
+            user: currentUser
+        });
+
+        document.getElementById('bid-amount').value = '';
+    }
+
+    function inviaMessaggioChat() {
+        const text = document.getElementById('chat-input').value.trim();
+        if (!text) return;
+
+        // Invia il messaggio al server Socket.IO
+        socket.emit('send_message', {
+            roomCode: currentRoom,
+            sender: currentUser,
+            text: text
+        });
+
+        document.getElementById('chat-input').value = '';
+    }
+
+    // 4. ASCOLTATORI DI EVENTI (RICEZIONE IN TEMPO REALE)
+
+    // Sincronizzazione Rilancio: Eseguito contemporaneamente su tutti i dispositivi connessi
+    socket.on('update_bid', (data) => {
+        document.getElementById('current-player').innerText = data.player;
+        document.getElementById('current-bid').innerText = data.bid;
+        document.getElementById('current-user').innerText = data.user;
+    });
+
+    // Sincronizzazione Chat: Mostra i nuovi messaggi ricevuti in tempo reale
+    socket.on('chat_message', (data) => {
+        const chatBox = document.getElementById('chat-box');
+        const msgDiv = document.createElement('div');
+        msgDiv.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll verso il basso
+    });
+</script>
+
+</body>
+</html>
