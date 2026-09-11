@@ -1,360 +1,477 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="it">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FantaAsta Live</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #121212; color: #fff; }
+
+        /* HEADER & NAVBAR */
+        header {
+            background: #1e1e1e;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00e676;
+        }
+        .logo { font-weight: bold; font-size: 1.2rem; color: #00e676; }
+        .hamburger { font-size: 24px; cursor: pointer; user-select: none; }
+
+        /* MENU LATERALE */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; z-index: 99;
+        }
+        .sidebar {
+            position: fixed; top: 0; right: -100%;
+            width: 20%; min-width: 220px;
+            height: 100%; background: #1e1e1e;
+            z-index: 100; transition: right 0.3s ease;
+            padding: 20px 10px; display: flex; flex-direction: column; gap: 15px;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+        }
+        .sidebar.active { right: 0; }
+        .sidebar-overlay.active { display: block; }
+        .sidebar-btn {
+            background: #2a2a2a; color: white; border: none; padding: 12px;
+            border-radius: 6px; cursor: pointer; text-align: left; font-size: 0.9rem;
+        }
+        .sidebar-btn:hover, .sidebar-btn.active-tab { background: #00e676; color: #000; font-weight: bold; }
+
+        /* PAGINA ACCESSO / LOGIN */
+        .auth-container {
+            max-width: 400px; margin: 80px auto; padding: 25px;
+            background: #1e1e1e; border-radius: 12px; text-align: center;
+        }
+        .auth-container input {
+            width: 100%; padding: 12px; margin: 10px 0;
+            border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: #fff;
+        }
+        .btn {
+            width: 100%; padding: 12px; background: #00e676; color: #000;
+            border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;
+        }
+
+        /* STRUTTURA APPLICAZIONE */
+        .app-container { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* SEZIONE LIVE */
+        .live-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 768px) { .live-grid { grid-template-columns: 2fr 1fr; } }
+        
+        .player-card {
+            background: #1e1e1e; padding: 20px; border-radius: 12px; text-align: center;
+        }
+        .player-img { width: 120px; height: 120px; border-radius: 50%; background: #333; margin: 0 auto 10px; object-fit: cover; }
+        .bidding-box {
+            display: flex; gap: 10px; justify-content: center; align-items: center; margin: 15px 0;
+        }
+        .bidding-box input {
+            width: 80px; padding: 10px; text-align: center; border-radius: 6px;
+            border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 1.1rem;
+        }
+        .btn-plus { width: 45px; height: 45px; font-size: 1.5rem; }
+        .credits-display { font-size: 1.2rem; margin-top: 10px; color: #ffb74d; }
+
+        .chat-box {
+            background: #1e1e1e; border-radius: 12px; height: 350px;
+            display: flex; flex-direction: column; padding: 10px;
+        }
+        .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .chat-msg { background: #2a2a2a; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
+
+        /* SEARCH BAR, FILTRI & CARICAMENTO LISTONE */
+        .search-bar, .filter-select {
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid #333; background: #2a2a2a; color: #fff; margin-bottom: 15px;
+        }
+        .filters-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        
+        .upload-box {
+            background: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 15px;
+            border: 1px dashed #00e676; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+        }
+        .file-input-wrapper { display: flex; align-items: center; gap: 10px; }
+
+        /* LISTONE E ROSA */
+        .list-item {
+            background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .role-badge {
+            display: inline-block; width: 25px; height: 25px; text-align: center;
+            line-height: 25px; border-radius: 4px; font-weight: bold; margin-right: 10px;
+        }
+        .role-P { background: #fbc02d; color: #000; }
+        .role-D { background: #1e88e5; color: #fff; }
+        .role-C { background: #43a047; color: #fff; }
+        .role-A { background: #e53935; color: #fff; }
+        .role-header { color: #00e676; margin: 15px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="it"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;FantaAsta Live&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>body { background-color: #121212; color: #fff; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* HEADER &amp; NAVBAR */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #1e1e1e;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-bottom: 2px solid #00e676;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.logo { font-weight: bold; font-size: 1.2rem; color: #00e676; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.hamburger { font-size: 24px; cursor: pointer; user-select: none; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* MENU LATERALE (Occupazione 20% larghezza) */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar-overlay {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed; top: 0; left: 0; width: 100%; height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0,0,0,0.5); display: none; z-index: 99;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed; top: 0; right: -100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 20%; min-width: 200px; /* Fallback min-width per schermi molto piccoli */</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 100%; background: #1e1e1e;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>z-index: 100; transition: right 0.3s ease;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px 10px; display: flex; flex-direction: column; gap: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: -2px 0 10px rgba(0,0,0,0.5);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar.active { right: 0; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar-overlay.active { display: block; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar-btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #2a2a2a; color: white; border: none; padding: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 6px; cursor: pointer; text-align: left; font-size: 0.9rem;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.sidebar-btn:hover, .sidebar-btn.active-tab { background: #00e676; color: #000; font-weight: bold; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* PAGINA ACCESSO / LOGIN */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.auth-container {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 400px; margin: 80px auto; padding: 25px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #1e1e1e; border-radius: 12px; text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.auth-container input {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%; padding: 12px; margin: 10px 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%; padding: 12px; background: #00e676; color: #000;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* STRUTTURA APPLICAZIONE */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.app-container { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.section { display: none; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.section.active { display: block; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* SEZIONE LIVE */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.live-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@media(min-width: 768px) { .live-grid { grid-template-columns: 2fr 1fr; } }</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.player-card {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #1e1e1e; padding: 20px; border-radius: 12px; text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.player-img { width: 120px; height: 120px; border-radius: 50%; background: #333; margin: 0 auto 10px; object-fit: cover; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.bidding-box {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex; gap: 10px; justify-content: center; align-items: center; margin: 15px 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.bidding-box input {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 80px; padding: 10px; text-align: center; border-radius: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 1.1rem;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-plus { width: 45px; height: 45px; font-size: 1.5rem; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.credits-display { font-size: 1.2rem; margin-top: 10px; color: #ffb74d; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.chat-box {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #1e1e1e; border-radius: 12px; height: 350px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex; flex-direction: column; padding: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.chat-msg { background: #2a2a2a; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* SEARCH BAR &amp; FILTRI GENERI */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.search-bar, .filter-select {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%; padding: 10px; border-radius: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid #333; background: #2a2a2a; color: #fff; margin-bottom: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.filters-container { display: flex; gap: 10px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* LISTONE E ROSA */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.list-item {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex; justify-content: space-between; align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.role-header { color: #00e676; margin: 15px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- NAVBAR --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;header&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="logo"&gt;FantaAsta Live ⚽&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="hamburger" onclick="toggleMenu()"&gt;☰&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- OVERLAY &amp; SIDEBAR (Ocupa il 20% della larghezza) --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sidebar" id="sidebar"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;h3 style="margin-bottom: 10px; font-size: 0.9rem;"&gt;MENU&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="sidebar-btn active-tab" onclick="switchTab('live')"&gt;🔴 Live Asta&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="sidebar-btn" onclick="switchTab('listone')"&gt;📋 Listone&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="sidebar-btn" onclick="switchTab('rosa')"&gt;🛡️ La Mia Rosa&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 1. SCHERMATA LOGIN / CREAZIONE STANZA --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="auth-container" id="auth-section"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;h2&gt;FantaAsta&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;p style="color: #aaa; font-size: 0.85rem; margin-top: 5px;"&gt;Accedi per partecipare all'asta&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input type="text" id="username-input" placeholder="Il tuo Nome / Nome Squadra"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input type="text" id="room-input" placeholder="Codice Stanza (es. X7A9B)"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn" onclick="joinRoom()"&gt;Unisciti alla Stanza&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="margin: 15px 0; color: #666;"&gt;Oppure&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn" style="background: #333; color: white;" onclick="createRoom()"&gt;Crea Nuova Stanza&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 2. CONTENUTO APPLICAZIONE --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="app-container" id="app-section"&gt;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- SEZIONE 1: LIVE ASTA --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="live" class="section active"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" class="search-bar" placeholder="🔍 Cerca e chiama giocatore..."&gt;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="live-grid"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;!-- Giocatore In Asta --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="player-card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;img src="https://via.placeholder.com/120" alt="Giocatore" class="player-img" id="player-img"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;h2 id="player-name"&gt;Lautaro Martinez&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p style="color: #aaa;" id="player-team"&gt;Inter - Attaccante (A)&lt;/p&gt;</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="credits-display"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>Offerta Corrente: &lt;b id="current-bid" style="color: #00e676;"&gt;1 FM&lt;/b&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;small style="font-size: 0.8rem; color: #888;"&gt;Offerto da: &lt;span id="highest-bidder"&gt;Nessuno&lt;/span&gt;&lt;/small&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;!-- Controlli Puntata --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="bidding-box"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;button class="btn btn-plus" onclick="incrementBid()"&gt;+&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;input type="number" id="bid-input" value="1" min="1"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;button class="btn" style="width: auto; padding: 10px 15px;" onclick="placeBid()"&gt;Punta&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="credits-display" style="font-size: 0.9rem;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>I tuoi Fantacrediti rimasti: &lt;b id="my-credits" style="color: #00e676;"&gt;500&lt;/b&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;!-- Chat Live --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="chat-box"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;h4 style="margin-bottom: 8px;"&gt;Chat Asta&lt;/h4&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="chat-messages" id="chat-messages"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="chat-msg"&gt;&lt;b&gt;Sistema:&lt;/b&gt; Stanza creata. Inizia l'asta!&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div style="display: flex; gap: 5px;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;input type="text" id="chat-input" placeholder="Scrivi un messaggio..." style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;button class="btn" style="width: auto; padding: 8px 12px;" onclick="sendChat()"&gt;Invia&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- SEZIONE 2: LISTONE GIOCATORI --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="listone" class="section"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" class="search-bar" id="search-listone" placeholder="🔍 Cerca per nome..." onkeyup="filterListone()"&gt;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="filters-container"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;select class="filter-select" id="filter-role" onchange="filterListone()"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="ALL"&gt;Tutti i Ruoli&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="P"&gt;Portieri&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="D"&gt;Difensori&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="C"&gt;Centrocampisti&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="A"&gt;Attaccanti&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;select class="filter-select" id="sort-order" onchange="filterListone()"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="alpha"&gt;Ordine Alfabetico&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="credits"&gt;Ordine Fantacrediti (FVM)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="listone-container"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;!-- I giocatori verranno caricati dinamicamente via JS --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- SEZIONE 3: LA MIA ROSA --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="rosa" class="section"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2&gt;La Mia Rosa&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;p style="color:#aaa; margin-bottom: 15px;"&gt;Totale speso: &lt;span id="total-spent" style="color:#00e676"&gt;0&lt;/span&gt; FM&lt;/p&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 class="role-header"&gt;Portieri (P)&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="rosa-p"&gt;&lt;i&gt;Nessun portiere acquistato&lt;/i&gt;&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 class="role-header"&gt;Difensori (D)&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="rosa-d"&gt;&lt;i&gt;Nessun difensore acquistato&lt;/i&gt;&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 class="role-header"&gt;Centrocampisti (C)&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="rosa-c"&gt;&lt;i&gt;Nessun centrocampista acquistato&lt;/i&gt;&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 class="role-header"&gt;Attaccanti (A)&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="rosa-a"&gt;&lt;i&gt;Nessun attaccante acquistato&lt;/i&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- GESTIONE MENU SIDEBAR (20% WIDE) ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function toggleMenu() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('sidebar').classList.toggle('active');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('overlay').classList.toggle('active');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function switchTab(tabId) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.querySelectorAll('.section').forEach(el =&gt; el.classList.remove('active'));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.querySelectorAll('.sidebar-btn').forEach(el =&gt; el.classList.remove('active-tab'));</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById(tabId).classList.add('active');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>event.target.classList.add('active-tab');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>toggleMenu(); // Chiude il menu dopo il click</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- ACCESSO E CREAZIONE STANZA ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function generateRoomCode() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return Math.random().toString(36).substring(2, 7).toUpperCase();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function createRoom() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const code = generateRoomCode();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('room-input').value = code;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>alert("Codice stanza generato: " + code + "\nCondividilo con i tuoi amici in Italia!");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function joinRoom() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const user = document.getElementById('username-input').value;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const room = document.getElementById('room-input').value;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(!user || !room) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>alert("Inserisci sia il nome utente che il codice stanza!");</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('auth-section').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('app-section').style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadListoneData();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- LOGICA ASTA E PUNTATE ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let currentBid = 1;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function incrementBid() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let input = document.getElementById('bid-input');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>input.value = parseInt(input.value) + 1;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function placeBid() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let val = parseInt(document.getElementById('bid-input').value);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(val &gt; currentBid) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>currentBid = val;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('current-bid').innerText = currentBid + " FM";</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('highest-bidder').innerText = document.getElementById('username-input').value;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>addChatMessage("Sistema", document.getElementById('username-input').value + " ha offerto " + currentBid + " FM!");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>alert("L'offerta deve essere superiore a quella attuale!");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- CHAT ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function sendChat() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let input = document.getElementById('chat-input');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let user = document.getElementById('username-input').value;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(input.value.trim() !== "") {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>addChatMessage(user, input.value);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>input.value = "";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function addChatMessage(sender, msg) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let container = document.getElementById('chat-messages');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let div = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>div.className = 'chat-msg';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>div.innerHTML = `&lt;b&gt;${sender}:&lt;/b&gt; ${msg}`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>container.appendChild(div);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>container.scrollTop = container.scrollHeight;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- DATI LISTONE DI PROVA ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const samplePlayers = [</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 90 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Nicolò Barella", team: "Inter", role: "C", fvm: 35 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Gleison Bremer", team: "Juventus", role: "D", fvm: 28 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Mike Maignan", team: "Milan", role: "P", fvm: 25 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Khvicha Kvaratskhelia", team: "Napoli", role: "A", fvm: 75 }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function loadListoneData() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>filterListone();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function filterListone() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const search = document.getElementById('search-listone').value.toLowerCase();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const role = document.getElementById('filter-role').value;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const sort = document.getElementById('sort-order').value;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let filtered = samplePlayers.filter(p =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const matchName = p.name.toLowerCase().includes(search);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const matchRole = role === "ALL" || p.role === role;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return matchName &amp;&amp; matchRole;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(sort === "alpha") {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>filtered.sort((a,b) =&gt; a.name.localeCompare(b.name));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>filtered.sort((a,b) =&gt; b.fvm - a.fvm);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const container = document.getElementById('listone-container');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>container.innerHTML = "";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>filtered.forEach(p =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>container.innerHTML += `</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="list-item"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;b&gt;${p.name}&lt;/b&gt; &lt;small&gt;(${p.team})&lt;/small&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;br&gt;&lt;span style="color:#00e676; font-size:0.8rem;"&gt;Ruolo: ${p.role}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div&gt;&lt;b&gt;${p.fvm} FM&lt;/b&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+    <!-- NAVBAR -->
+    <header>
+        <div class="logo">FantaAsta Live ⚽</div>
+        <div class="hamburger" onclick="toggleMenu()">☰</div>
+    </header>
+
+    <!-- OVERLAY & SIDEBAR -->
+    <div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <h3 style="margin-bottom: 10px; font-size: 0.9rem;">MENU</h3>
+        <button class="sidebar-btn active-tab" onclick="switchTab('live', event)">🔴 Live Asta</button>
+        <button class="sidebar-btn" onclick="switchTab('listone', event)">📋 Listone</button>
+        <button class="sidebar-btn" onclick="switchTab('rosa', event)">🛡️ La Mia Rosa</button>
+    </div>
+
+    <!-- 1. SCHERMATA LOGIN / CREAZIONE STANZA -->
+    <div class="auth-container" id="auth-section">
+        <h2>FantaAsta</h2>
+        <p style="color: #aaa; font-size: 0.85rem; margin-top: 5px;">Accedi per partecipare all'asta</p>
+        <br>
+        <input type="text" id="username-input" placeholder="Il tuo Nome / Nome Squadra">
+        <input type="text" id="room-input" placeholder="Codice Stanza (es. X7A9B)">
+        <button class="btn" onclick="joinRoom()">Unisciti alla Stanza</button>
+        <div style="margin: 15px 0; color: #666;">Oppure</div>
+        <button class="btn" style="background: #333; color: white;" onclick="createRoom()">Crea Nuova Stanza</button>
+    </div>
+
+    <!-- 2. CONTENUTO APPLICAZIONE -->
+    <div class="app-container" id="app-section">
+        
+        <!-- SEZIONE 1: LIVE ASTA -->
+        <div id="live" class="section active">
+            <input type="text" class="search-bar" placeholder="🔍 Cerca e chiama giocatore...">
+            
+            <div class="live-grid">
+                <!-- Giocatore In Asta -->
+                <div class="player-card">
+                    <img src="https://via.placeholder.com/120" alt="Giocatore" class="player-img" id="player-img">
+                    <h2 id="player-name">Lautaro Martinez</h2>
+                    <p style="color: #aaa;" id="player-team">Inter - Attaccante (A)</p>
+                    
+                    <div class="credits-display">
+                        Offerta Corrente: <b id="current-bid" style="color: #00e676;">1 FM</b>
+                        <br>
+                        <small style="font-size: 0.8rem; color: #888;">Offerto da: <span id="highest-bidder">Nessuno</span></small>
+                    </div>
+
+                    <!-- Controlli Puntata -->
+                    <div class="bidding-box">
+                        <button class="btn btn-plus" onclick="incrementBid()">+</button>
+                        <input type="number" id="bid-input" value="1" min="1">
+                        <button class="btn" style="width: auto; padding: 10px 15px;" onclick="placeBid()">Punta</button>
+                    </div>
+
+                    <button class="btn" style="background: #ffb74d; color: #000; margin-bottom: 10px;" onclick="assignPlayer()">Aggiudica a me</button>
+
+                    <div class="credits-display" style="font-size: 0.9rem;">
+                        I tuoi Fantacrediti rimasti: <b id="my-credits" style="color: #00e676;">500</b>
+                    </div>
+                </div>
+
+                <!-- Chat Live -->
+                <div class="chat-box">
+                    <h4 style="margin-bottom: 8px;">Chat Asta</h4>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-msg"><b>Sistema:</b> Stanza creata. Inizia l'asta!</div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff;">
+                        <button class="btn" style="width: auto; padding: 8px 12px;" onclick="sendChat()">Invia</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEZIONE 2: LISTONE GIOCATORI -->
+        <div id="listone" class="section">
+            
+            <!-- SEZIONE CARICAMENTO LISTONE PERSONALIZZATO -->
+            <div class="upload-box">
+                <div class="file-input-wrapper">
+                    <label style="font-size: 0.9rem; font-weight: bold; color: #00e676;">Carica Listone (CSV / JSON):</label>
+                    <input type="file" id="file-input" accept=".csv, .json, .txt" style="display:none" onchange="handleFileUpload(event)">
+                    <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onclick="document.getElementById('file-input').click()">📁 Scegli File</button>
+                </div>
+                <button class="btn" style="width: auto; padding: 6px 12px; background: #444; color: #fff; font-size: 0.85rem;" onclick="resetDefaultListone()">Ripristina Default</button>
+            </div>
+
+            <input type="text" class="search-bar" id="search-listone" placeholder="🔍 Cerca per nome o squadra..." onkeyup="filterListone()">
+            
+            <div class="filters-container">
+                <select class="filter-select" id="filter-role" onchange="filterListone()">
+                    <option value="ALL">Tutti i Ruoli</option>
+                    <option value="P">Portieri</option>
+                    <option value="D">Difensori</option>
+                    <option value="C">Centrocampisti</option>
+                    <option value="A">Attaccanti</option>
+                </select>
+                <select class="filter-select" id="sort-order" onchange="filterListone()">
+                    <option value="alpha">Ordine Alfabetico</option>
+                    <option value="credits">Ordine Fantacrediti (FVM)</option>
+                </select>
+            </div>
+
+            <div id="listone-container"></div>
+        </div>
+
+        <!-- SEZIONE 3: LA MIA ROSA -->
+        <div id="rosa" class="section">
+            <h2>La Mia Rosa</h2>
+            <p style="color:#aaa; margin-bottom: 15px;">Totale speso: <span id="total-spent" style="color:#00e676">0</span> FM</p>
+
+            <h3 class="role-header">Portieri (P)</h3>
+            <div id="rosa-p"><i>Nessun portiere acquistato</i></div>
+
+            <h3 class="role-header">Difensori (D)</h3>
+            <div id="rosa-d"><i>Nessun difensore acquistato</i></div>
+
+            <h3 class="role-header">Centrocampisti (C)</h3>
+            <div id="rosa-c"><i>Nessun centrocampista acquistato</i></div>
+
+            <h3 class="role-header">Attaccanti (A)</h3>
+            <div id="rosa-a"><i>Nessun attaccante acquistato</i></div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- LOGICA DI STATO ---
+        let myCredits = 500;
+        let totalSpent = 0;
+        let currentBid = 1;
+        let currentPlayer = { name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 95 };
+        let mySquad = { P: [], D: [], C: [], A: [] };
+
+        const defaultPlayers = [
+            { name: "Maignan", team: "Milan", role: "P", fvm: 35 },
+            { name: "Sommer", team: "Inter", role: "P", fvm: 30 },
+            { name: "Di Lorenzo", team: "Napoli", role: "D", fvm: 22 },
+            { name: "Dimarco", team: "Inter", role: "D", fvm: 28 },
+            { name: "Barella", team: "Inter", role: "C", fvm: 35 },
+            { name: "Pulisic", team: "Milan", role: "C", fvm: 40 },
+            { name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 95 },
+            { name: "Vlahovic", team: "Juventus", role: "A", fvm: 80 },
+            { name: "Lookman", team: "Atalanta", role: "A", fvm: 75 }
+        ];
+
+        let playersList = [...defaultPlayers];
+
+        // --- GESTIONE MENU SIDEBAR ---
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function switchTab(tabId, evt) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-btn').forEach(el => el.classList.remove('active-tab'));
+            
+            document.getElementById(tabId).classList.add('active');
+            if(evt) evt.target.classList.add('active-tab');
+            toggleMenu();
+        }
+
+        // --- ACCESSO E CREAZIONE STANZA ---
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 7).toUpperCase();
+        }
+
+        function createRoom() {
+            const code = generateRoomCode();
+            document.getElementById('room-input').value = code;
+            alert("Codice stanza generato: " + code + "\nCondividilo con i tuoi amici!");
+        }
+
+        function joinRoom() {
+            const user = document.getElementById('username-input').value;
+            const room = document.getElementById('room-input').value;
+            if(!user || !room) {
+                alert("Inserisci sia il nome utente che il codice stanza!");
+                return;
+            }
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            filterListone();
+        }
+
+        // --- CARICAMENTO LISTONE PERSONALIZZATO ---
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const content = e.target.result;
+                try {
+                    if (file.name.endsWith('.json')) {
+                        playersList = JSON.parse(content);
+                    } else {
+                        // Tratta come CSV / TXT (Nome,Squadra,Ruolo,FVM)
+                        const lines = content.split('\n');
+                        const parsed = [];
+                        
+                        lines.forEach(line => {
+                            const parts = line.split(',');
+                            if (parts.length >= 4) {
+                                parsed.push({
+                                    name: parts[0].trim(),
+                                    team: parts[1].trim(),
+                                    role: parts[2].trim().toUpperCase(),
+                                    fvm: parseInt(parts[3].trim()) || 1
+                                });
+                            }
+                        });
+
+                        if (parsed.length > 0) {
+                            playersList = parsed;
+                        } else {
+                            throw new Error("Formato file non valido");
+                        }
+                    }
+                    alert(`Caricati ${playersList.length} giocatori con successo!`);
+                    filterListone();
+                } catch (err) {
+                    alert("Errore nella lettura del file. Assicurati che sia in formato JSON valido o CSV (Nome,Squadra,Ruolo,FVM).");
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function resetDefaultListone() {
+            playersList = [...defaultPlayers];
+            filterListone();
+            alert("Listone ripristinato a quello di default.");
+        }
+
+        // --- LOGICA ASTA E PUNTATE ---
+        function incrementBid() {
+            let input = document.getElementById('bid-input');
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function placeBid() {
+            let val = parseInt(document.getElementById('bid-input').value);
+            if (val > myCredits) {
+                alert("Non hai abbastanza crediti!");
+                return;
+            }
+            if(val > currentBid) {
+                currentBid = val;
+                document.getElementById('current-bid').innerText = currentBid + " FM";
+                document.getElementById('highest-bidder').innerText = document.getElementById('username-input').value;
+                addChatMessage("Sistema", document.getElementById('username-input').value + " ha offerto " + currentBid + " FM!");
+            } else {
+                alert("L'offerta deve essere superiore a quella attuale!");
+            }
+        }
+
+        function assignPlayer() {
+            const user = document.getElementById('username-input').value;
+            const highestBidder = document.getElementById('highest-bidder').innerText;
+
+            if (highestBidder !== user) {
+                alert("Devi effettuare l'offerta più alta per aggiudicarti il giocatore!");
+                return;
+            }
+
+            myCredits -= currentBid;
+            totalSpent += currentBid;
+
+            mySquad[currentPlayer.role].push({ name: currentPlayer.name, team: currentPlayer.team, price: currentBid });
+
+            document.getElementById('my-credits').innerText = myCredits;
+            document.getElementById('total-spent').innerText = totalSpent;
+
+            addChatMessage("Sistema", `🎉 ${currentPlayer.name} acquistato da ${user} per ${currentBid} FM!`);
+            updateRosaUI();
+
+            // Reset asta
+            currentBid = 1;
+            document.getElementById('current-bid').innerText = "1 FM";
+            document.getElementById('bid-input').value = "1";
+            document.getElementById('highest-bidder').innerText = "Nessuno";
+        }
+
+        // --- CHAT ---
+        function sendChat() {
+            let input = document.getElementById('chat-input');
+            let user = document.getElementById('username-input').value;
+            if(input.value.trim() !== "") {
+                addChatMessage(user, input.value);
+                input.value = "";
+            }
+        }
+
+        function addChatMessage(sender, msg) {
+            let container = document.getElementById('chat-messages');
+            let div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `<b>${sender}:</b> ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- DATI LISTONE E ROSA ---
+        function filterListone() {
+            const search = document.getElementById('search-listone').value.toLowerCase();
+            const roleFilter = document.getElementById('filter-role').value;
+            const sortOrder = document.getElementById('sort-order').value;
+
+            let filtered = playersList.filter(p => {
+                const matchesName = p.name.toLowerCase().includes(search) || p.team.toLowerCase().includes(search);
+                const matchesRole = roleFilter === 'ALL' || p.role === roleFilter;
+                return matchesName && matchesRole;
+            });
+
+            if (sortOrder === 'alpha') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortOrder === 'credits') {
+                filtered.sort((a, b) => b.fvm - a.fvm);
+            }
+
+            const container = document.getElementById('listone-container');
+            container.innerHTML = "";
+
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div>
+                        <span class="role-badge role-${p.role}">${p.role}</span>
+                        <b>${p.name}</b> <small style="color:#aaa">(${p.team})</small>
+                    </div>
+                    <div>FVM: <b>${p.fvm}</b> FM</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateRosaUI() {
+            ['P', 'D', 'C', 'A'].forEach(role => {
+                const container = document.getElementById(`rosa-${role.toLowerCase()}`);
+                if (mySquad[role].length === 0) {
+                    container.innerHTML = '<i>Nessun giocatore acquistato</i>';
+                } else {
+                    container.innerHTML = mySquad[role].map(p => `
+                        <div class="list-item">
+                            <div><b>${p.name}</b> <small style="color:#aaa">(${p.team})</small></div>
+                            <div style="color:#00e676"><b>${p.price} FM</b></div>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
