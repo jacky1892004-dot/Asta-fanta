@@ -9,8 +9,10 @@
 const http = require('http');\
 const \{ Server \} = require('socket.io');\
 const path = require('path');\
+const helmet = require('helmet');\
 \
 const app = express();\
+app.use(helmet());\
 const server = http.createServer(app);\
 const io = new Server(server, \{ cors: \{ origin: "*" \} \});\
 \
