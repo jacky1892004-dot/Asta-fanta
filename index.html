@@ -155,8 +155,8 @@
                 <!-- Giocatore In Asta -->
                 <div class="player-card">
                     <img src="https://via.placeholder.com/120" alt="Giocatore" class="player-img" id="player-img">
-                    <h2 id="player-name">Lautaro Martinez</h2>
-                    <p style="color: #aaa;" id="player-team">Inter - Attaccante (A)</p>
+                    <h2 id="player-name">Seleziona un giocatore</h2>
+                    <p style="color: #aaa;" id="player-team">Usa la barra sopra per chiamare in asta</p>
                     
                     <div class="credits-display">
                         Offerta Corrente: <b id="current-bid" style="color: #00e676;">1 FM</b>
@@ -197,11 +197,11 @@
             
             <div class="upload-box">
                 <div class="file-input-wrapper">
-                    <label style="font-size: 0.9rem; font-weight: bold; color: #00e676;">Carica Listone (CSV / JSON):</label>
+                    <label style="font-size: 0.9rem; font-weight: bold; color: #00e676;">Aggiorna Listone (Opzionale CSV/JSON):</label>
                     <input type="file" id="file-input" accept=".csv, .json, .txt" style="display:none" onchange="handleFileUpload(event)">
                     <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onclick="document.getElementById('file-input').click()">📁 Scegli File</button>
                 </div>
-                <button class="btn" style="width: auto; padding: 6px 12px; background: #444; color: #fff; font-size: 0.85rem;" onclick="resetDefaultListone()">Ripristina Default</button>
+                <button class="btn" style="width: auto; padding: 6px 12px; background: #444; color: #fff; font-size: 0.85rem;" onclick="resetDefaultListone()">Ripristina Listone Predefinito</button>
             </div>
 
             <input type="text" class="search-bar" id="search-listone" placeholder="🔍 Cerca per nome o squadra..." onkeyup="filterListone()">
@@ -244,42 +244,596 @@
     </div>
 
     <script>
-        // --- LOGICA DI STATO ---
+        // --- LISTONE PERMANENTE INTEGRATO (563 GIOCATORI) ---
+        const defaultPlayers = [
+            // PORTIERE (69)
+            {"name": "SVILAR", "team": "ROM", "role": "P", "fvm": 23},
+            {"name": "CARNESECCHI", "team": "ATA", "role": "P", "fvm": 21},
+            {"name": "MAIGNAN", "team": "MIL", "role": "P", "fvm": 20},
+            {"name": "MARTINEZ", "team": "INT", "role": "P", "fvm": 20},
+            {"name": "VICARIO", "team": "JUV", "role": "P", "fvm": 20},
+            {"name": "BUTEZ", "team": "COM", "role": "P", "fvm": 19},
+            {"name": "MERET", "team": "NAP", "role": "P", "fvm": 15},
+            {"name": "CAPRILE", "team": "CAG", "role": "P", "fvm": 14},
+            {"name": "SKORUPSKI", "team": "BOL", "role": "P", "fvm": 14},
+            {"name": "DE GEA", "team": "FIO", "role": "P", "fvm": 13},
+            {"name": "FALCONE", "team": "LEC", "role": "P", "fvm": 12},
+            {"name": "MANDAS", "team": "LAZ", "role": "P", "fvm": 12},
+            {"name": "OKOYE", "team": "UDI", "role": "P", "fvm": 12},
+            {"name": "PERRI", "team": "TOR", "role": "P", "fvm": 10},
+            {"name": "BIJLOW", "team": "GEN", "role": "P", "fvm": 9},
+            {"name": "MURIC", "team": "SAS", "role": "P", "fvm": 9},
+            {"name": "STANKOVIC", "team": "VEN", "role": "P", "fvm": 8},
+            {"name": "PALMISANI", "team": "FRO", "role": "P", "fvm": 7},
+            {"name": "SANCHEZ", "team": "COM", "role": "P", "fvm": 7},
+            {"name": "MILINKOVIC", "team": "NAP", "role": "P", "fvm": 6},
+            {"name": "THIAM", "team": "MON", "role": "P", "fvm": 6},
+            {"name": "MOTTA", "team": "LAZ", "role": "P", "fvm": 5},
+            {"name": "DAFFARA", "team": "PAR", "role": "P", "fvm": 4},
+            {"name": "CORVI", "team": "PAR", "role": "P", "fvm": 3},
+            {"name": "DESPLANCHES", "team": "FRO", "role": "P", "fvm": 3},
+            {"name": "PROVEDEL", "team": "INT", "role": "P", "fvm": 3},
+            {"name": "MONTIPO'", "team": "VEN", "role": "P", "fvm": 2},
+            {"name": "MROZEK", "team": "UDI", "role": "P", "fvm": 2},
+            {"name": "TERRACCIANO", "team": "MIL", "role": "P", "fvm": 2},
+            {"name": "BLEVE", "team": "LEC", "role": "P", "fvm": 1},
+            {"name": "BORBEI", "team": "LEC", "role": "P", "fvm": 1},
+            {"name": "CHRISTENSEN", "team": "FIO", "role": "P", "fvm": 1},
+            {"name": "CONTINI", "team": "NAP", "role": "P", "fvm": 1},
+            {"name": "DE MARZI GIORGIO", "team": "ROM", "role": "P", "fvm": 1},
+            {"name": "DI GENNARO", "team": "INT", "role": "P", "fvm": 1},
+            {"name": "FURLANETTO", "team": "LAZ", "role": "P", "fvm": 1},
+            {"name": "GHIDOTTI", "team": "PAR", "role": "P", "fvm": 1},
+            {"name": "GOLLINI", "team": "ROM", "role": "P", "fvm": 1},
+            {"name": "GRABARA", "team": "JUV", "role": "P", "fvm": 1},
+            {"name": "GRANDI", "team": "VEN", "role": "P", "fvm": 1},
+            {"name": "HAPPONEN", "team": "BOL", "role": "P", "fvm": 1},
+            {"name": "ISRAEL", "team": "TOR", "role": "P", "fvm": 1},
+            {"name": "LEZZERINI", "team": "FIO", "role": "P", "fvm": 1},
+            {"name": "LOLIC", "team": "FRO", "role": "P", "fvm": 1},
+            {"name": "MASCARDI", "team": "TOR", "role": "P", "fvm": 1},
+            {"name": "PADELLI", "team": "UDI", "role": "P", "fvm": 1},
+            {"name": "PENEV", "team": "LEC", "role": "P", "fvm": 1},
+            {"name": "PESSINA", "team": "BOL", "role": "P", "fvm": 1},
+            {"name": "PIANA", "team": "UDI", "role": "P", "fvm": 1},
+            {"name": "PINSOGLIO", "team": "JUV", "role": "P", "fvm": 1},
+            {"name": "PISSERI", "team": "FRO", "role": "P", "fvm": 1},
+            {"name": "POMPEI", "team": "ATA", "role": "P", "fvm": 1},
+            {"name": "POZZI", "team": "VEN", "role": "P", "fvm": 1},
+            {"name": "RADUNOVIC", "team": "CAG", "role": "P", "fvm": 1},
+            {"name": "RENZETTI", "team": "LAZ", "role": "P", "fvm": 1},
+            {"name": "ROSSI", "team": "ATA", "role": "P", "fvm": 1},
+            {"name": "RUSSO", "team": "SAS", "role": "P", "fvm": 1},
+            {"name": "SATALINO", "team": "SAS", "role": "P", "fvm": 1},
+            {"name": "SHERRI", "team": "CAG", "role": "P", "fvm": 1},
+            {"name": "SIVIERO", "team": "TOR", "role": "P", "fvm": 1},
+            {"name": "SOMMARIVA", "team": "GEN", "role": "P", "fvm": 1},
+            {"name": "SPORTIELLO", "team": "ATA", "role": "P", "fvm": 1},
+            {"name": "STOLZ", "team": "GEN", "role": "P", "fvm": 1},
+            {"name": "STRAJNAR", "team": "MON", "role": "P", "fvm": 1},
+            {"name": "TORNQVIST", "team": "MON", "role": "P", "fvm": 1},
+            {"name": "TORRIANI", "team": "MIL", "role": "P", "fvm": 1},
+            {"name": "TURATI", "team": "SAS", "role": "P", "fvm": 1},
+            {"name": "VASQUEZ", "team": "ROM", "role": "P", "fvm": 1},
+            {"name": "VIGORITO", "team": "COM", "role": "P", "fvm": 1},
+
+            // DIFENSORI (152)
+            {"name": "BREMER", "team": "JUV", "role": "D", "fvm": 24},
+            {"name": "AKANJI", "team": "INT", "role": "D", "fvm": 22},
+            {"name": "BASTONI", "team": "INT", "role": "D", "fvm": 21},
+            {"name": "BISSECK", "team": "INT", "role": "D", "fvm": 21},
+            {"name": "MANCINI", "team": "ROM", "role": "D", "fvm": 21},
+            {"name": "DI LORENZO", "team": "NAP", "role": "D", "fvm": 20},
+            {"name": "PAVLOVIC", "team": "MIL", "role": "D", "fvm": 20},
+            {"name": "RRAHMANI", "team": "NAP", "role": "D", "fvm": 20},
+            {"name": "KALULU", "team": "JUV", "role": "D", "fvm": 19},
+            {"name": "NDICKA", "team": "ROM", "role": "D", "fvm": 18},
+            {"name": "SOLET", "team": "UDI", "role": "D", "fvm": 18},
+            {"name": "HERMOSO", "team": "ROM", "role": "D", "fvm": 17},
+            {"name": "SCALVINI", "team": "ATA", "role": "D", "fvm": 17},
+            {"name": "STONES", "team": "INT", "role": "D", "fvm": 17},
+            {"name": "GILA", "team": "MIL", "role": "D", "fvm": 16},
+            {"name": "RAMON", "team": "COM", "role": "D", "fvm": 16},
+            {"name": "OSTIGARD", "team": "GEN", "role": "D", "fvm": 15},
+            {"name": "CHALOBAH", "team": "COM", "role": "D", "fvm": 14},
+            {"name": "DOEKHI", "team": "LAZ", "role": "D", "fvm": 13},
+            {"name": "MIRANDA", "team": "BOL", "role": "D", "fvm": 13},
+            {"name": "VALERI", "team": "PAR", "role": "D", "fvm": 13},
+            {"name": "VALLE", "team": "COM", "role": "D", "fvm": 13},
+            {"name": "VASQUEZ", "team": "GEN", "role": "D", "fvm": 13},
+            {"name": "BARTESAGHI", "team": "MIL", "role": "D", "fvm": 12},
+            {"name": "COMUZZO", "team": "TOR", "role": "D", "fvm": 12},
+            {"name": "DIEGO CARLOS", "team": "PAR", "role": "D", "fvm": 12},
+            {"name": "GABBIA", "team": "MIL", "role": "D", "fvm": 12},
+            {"name": "HIEN", "team": "ATA", "role": "D", "fvm": 12},
+            {"name": "KEMPF", "team": "COM", "role": "D", "fvm": 12},
+            {"name": "TIAGO GABRIEL", "team": "LEC", "role": "D", "fvm": 12},
+            {"name": "BRACAGLIA", "team": "FRO", "role": "D", "fvm": 11},
+            {"name": "BUONGIORNO", "team": "NAP", "role": "D", "fvm": 11},
+            {"name": "COCO", "team": "TOR", "role": "D", "fvm": 11},
+            {"name": "COUTO", "team": "COM", "role": "D", "fvm": 11},
+            {"name": "DEL PRATO", "team": "PAR", "role": "D", "fvm": 11},
+            {"name": "DOIG", "team": "SAS", "role": "D", "fvm": 11},
+            {"name": "DRAGUSIN", "team": "FIO", "role": "D", "fvm": 11},
+            {"name": "JIMENEZ", "team": "FIO", "role": "D", "fvm": 11},
+            {"name": "LUCUMI", "team": "JUV", "role": "D", "fvm": 11},
+            {"name": "CELIK", "team": "JUV", "role": "D", "fvm": 10},
+            {"name": "HOLM", "team": "BOL", "role": "D", "fvm": 10},
+            {"name": "ISMAJLI", "team": "TOR", "role": "D", "fvm": 10},
+            {"name": "KOULIERAKIS", "team": "ROM", "role": "D", "fvm": 10},
+            {"name": "LEYSEN", "team": "SAS", "role": "D", "fvm": 10},
+            {"name": "MARUSIC", "team": "LAZ", "role": "D", "fvm": 10},
+            {"name": "MINA", "team": "CAG", "role": "D", "fvm": 10},
+            {"name": "NUNO TAVARES", "team": "LAZ", "role": "D", "fvm": 10},
+            {"name": "THEATE", "team": "BOL", "role": "D", "fvm": 10},
+            {"name": "VOJVODA", "team": "UDI", "role": "D", "fvm": 10},
+            {"name": "BADIASHILE", "team": "NAP", "role": "D", "fvm": 9},
+            {"name": "GALLO", "team": "LEC", "role": "D", "fvm": 9},
+            {"name": "GATTI", "team": "JUV", "role": "D", "fvm": 9},
+            {"name": "HEGGEM", "team": "BOL", "role": "D", "fvm": 9},
+            {"name": "IDZES", "team": "SAS", "role": "D", "fvm": 9},
+            {"name": "MARCANDALLI", "team": "GEN", "role": "D", "fvm": 9},
+            {"name": "OBERT", "team": "CAG", "role": "D", "fvm": 9},
+            {"name": "OBRADOR", "team": "SAS", "role": "D", "fvm": 9},
+            {"name": "PAVARD", "team": "INT", "role": "D", "fvm": 9},
+            {"name": "PEDRAZA", "team": "LAZ", "role": "D", "fvm": 9},
+            {"name": "TOMORI", "team": "MIL", "role": "D", "fvm": 9},
+            {"name": "VALDEPENAS", "team": "FIO", "role": "D", "fvm": 9},
+            {"name": "BALERDI", "team": "ROM", "role": "D", "fvm": 8},
+            {"name": "BEIDI", "team": "CAG", "role": "D", "fvm": 8},
+            {"name": "BELLA-KOTCHAP", "team": "VEN", "role": "D", "fvm": 8},
+            {"name": "BEUKEMA", "team": "NAP", "role": "D", "fvm": 8},
+            {"name": "CORREIA", "team": "VEN", "role": "D", "fvm": 8},
+            {"name": "DE WINTER", "team": "MIL", "role": "D", "fvm": 8},
+            {"name": "GHILARDI", "team": "ROM", "role": "D", "fvm": 8},
+            {"name": "KABASELE", "team": "UDI", "role": "D", "fvm": 8},
+            {"name": "KELLY", "team": "JUV", "role": "D", "fvm": 8},
+            {"name": "KOSSOUNOU", "team": "ATA", "role": "D", "fvm": 8},
+            {"name": "MONTERISI", "team": "FRO", "role": "D", "fvm": 8},
+            {"name": "RENSCH", "team": "ROM", "role": "D", "fvm": 8},
+            {"name": "SUTALO", "team": "LAZ", "role": "D", "fvm": 8},
+            {"name": "VEIGA", "team": "LEC", "role": "D", "fvm": 8},
+            {"name": "VIERY", "team": "FIO", "role": "D", "fvm": 8},
+            {"name": "WALUKIEWICZ", "team": "SAS", "role": "D", "fvm": 8},
+            {"name": "ZE PEDRO", "team": "CAG", "role": "D", "fvm": 8},
+            {"name": "BRITSCHGI", "team": "PAR", "role": "D", "fvm": 7},
+            {"name": "CARBONI", "team": "MON", "role": "D", "fvm": 7},
+            {"name": "COMERT", "team": "TOR", "role": "D", "fvm": 7},
+            {"name": "GASPAR", "team": "LEC", "role": "D", "fvm": 7},
+            {"name": "HAINAUT", "team": "VEN", "role": "D", "fvm": 7},
+            {"name": "KAIKI", "team": "COM", "role": "D", "fvm": 7},
+            {"name": "KOFLER", "team": "CAG", "role": "D", "fvm": 7},
+            {"name": "KOLASINAC", "team": "ATA", "role": "D", "fvm": 7},
+            {"name": "ODENTHAL", "team": "SAS", "role": "D", "fvm": 7},
+            {"name": "PONGRACIC", "team": "FIO", "role": "D", "fvm": 7},
+            {"name": "PROVSTGAARD", "team": "LAZ", "role": "D", "fvm": 7},
+            {"name": "RANIERI", "team": "FIO", "role": "D", "fvm": 7},
+            {"name": "SMOLCIC", "team": "COM", "role": "D", "fvm": 7},
+            {"name": "VALENTI", "team": "PAR", "role": "D", "fvm": 7},
+            {"name": "VITIK", "team": "BOL", "role": "D", "fvm": 7},
+            {"name": "BERTOLA", "team": "UDI", "role": "D", "fvm": 6},
+            {"name": "CALETA-CAR", "team": "SAS", "role": "D", "fvm": 6},
+            {"name": "CALVANI", "team": "FRO", "role": "D", "fvm": 6},
+            {"name": "JESUS", "team": "VEN", "role": "D", "fvm": 6},
+            {"name": "MORENO", "team": "VEN", "role": "D", "fvm": 6},
+            {"name": "RODRIGUEZ", "team": "CAG", "role": "D", "fvm": 6},
+            {"name": "SIEBERT", "team": "LEC", "role": "D", "fvm": 6},
+            {"name": "TCHATO", "team": "FRO", "role": "D", "fvm": 6},
+            {"name": "ALHASSANE", "team": "BOL", "role": "D", "fvm": 5},
+            {"name": "CANDE", "team": "SAS", "role": "D", "fvm": 5},
+            {"name": "CITTADINI", "team": "FRO", "role": "D", "fvm": 5},
+            {"name": "DOSSENA", "team": "COM", "role": "D", "fvm": 5},
+            {"name": "EBOSSE", "team": "UDI", "role": "D", "fvm": 5},
+            {"name": "ESTUPINAN", "team": "MIL", "role": "D", "fvm": 5},
+            {"name": "HELLAND", "team": "BOL", "role": "D", "fvm": 5},
+            {"name": "KAMBWALA", "team": "COM", "role": "D", "fvm": 5},
+            {"name": "LAZZARI", "team": "LAZ", "role": "D", "fvm": 5},
+            {"name": "LUCCHESI", "team": "MON", "role": "D", "fvm": 5},
+            {"name": "MITAJ", "team": "GEN", "role": "D", "fvm": 5},
+            {"name": "OYONO", "team": "FRO", "role": "D", "fvm": 5},
+            {"name": "PELLEGRINI", "team": "LAZ", "role": "D", "fvm": 5},
+            {"name": "SCHINGTIENNE", "team": "VEN", "role": "D", "fvm": 5},
+            {"name": "TROILO", "team": "PAR", "role": "D", "fvm": 5},
+            {"name": "CASALE", "team": "BOL", "role": "D", "fvm": 4},
+            {"name": "CINQUEGRANO", "team": "SAS", "role": "D", "fvm": 4},
+            {"name": "FRANJIć", "team": "VEN", "role": "D", "fvm": 4},
+            {"name": "GOGLICHIDZE", "team": "MON", "role": "D", "fvm": 4},
+            {"name": "HALHAL", "team": "VEN", "role": "D", "fvm": 4},
+            {"name": "KOUADIO", "team": "MON", "role": "D", "fvm": 4},
+            {"name": "MARIANUCCI", "team": "NAP", "role": "D", "fvm": 4},
+            {"name": "MARIN", "team": "NAP", "role": "D", "fvm": 4},
+            {"name": "NDIAYE", "team": "PAR", "role": "D", "fvm": 4},
+            {"name": "PALMA", "team": "UDI", "role": "D", "fvm": 4},
+            {"name": "PATRIC", "team": "LAZ", "role": "D", "fvm": 4},
+            {"name": "PUCZKA", "team": "GEN", "role": "D", "fvm": 4},
+            {"name": "SVERKO", "team": "VEN", "role": "D", "fvm": 4},
+            {"name": "TERZIC", "team": "FRO", "role": "D", "fvm": 4},
+            {"name": "VAN DER BREMPT", "team": "SAS", "role": "D", "fvm": 4},
+            {"name": "ABANKWAH", "team": "UDI", "role": "D", "fvm": 3},
+            {"name": "AKPOGUMA", "team": "FRO", "role": "D", "fvm": 3},
+            {"name": "DIAWARA", "team": "MIL", "role": "D", "fvm": 3},
+            {"name": "GIGOT", "team": "LAZ", "role": "D", "fvm": 3},
+            {"name": "GOLDANIGA", "team": "COM", "role": "D", "fvm": 3},
+            {"name": "JEAN", "team": "LEC", "role": "D", "fvm": 3},
+            {"name": "OTOA", "team": "GEN", "role": "D", "fvm": 3},
+            {"name": "ANTOV", "team": "MON", "role": "D", "fvm": 2},
+            {"name": "CARBONI", "team": "PAR", "role": "D", "fvm": 2},
+            {"name": "DE SILVESTRI", "team": "BOL", "role": "D", "fvm": 2},
+            {"name": "DROBNIC", "team": "PAR", "role": "D", "fvm": 2},
+            {"name": "MAYE", "team": "MON", "role": "D", "fvm": 2},
+            {"name": "NDABA", "team": "LEC", "role": "D", "fvm": 2},
+            {"name": "PIERAGNOLO", "team": "SAS", "role": "D", "fvm": 2},
+            {"name": "RUGANI", "team": "JUV", "role": "D", "fvm": 2},
+            {"name": "ADDO", "team": "LEC", "role": "D", "fvm": 1},
+            {"name": "AMEY", "team": "FRO", "role": "D", "fvm": 1},
+            {"name": "FAYED", "team": "FRO", "role": "D", "fvm": 1},
+            {"name": "GOMES", "team": "VEN", "role": "D", "fvm": 1},
+            {"name": "PAZ", "team": "SAS", "role": "D", "fvm": 1},
+            {"name": "ZIOLKOWSKI", "team": "MON", "role": "D", "fvm": 1},
+
+            // CENTROCAMPISTI (215)
+            {"name": "CALHANOGLU", "team": "INT", "role": "C", "fvm": 40},
+            {"name": "MCTOMINAY", "team": "NAP", "role": "C", "fvm": 36},
+            {"name": "BATURINA", "team": "COM", "role": "C", "fvm": 35},
+            {"name": "RABIOT", "team": "MIL", "role": "C", "fvm": 32},
+            {"name": "DE BRUYNE", "team": "NAP", "role": "C", "fvm": 31},
+            {"name": "DIMARCO", "team": "INT", "role": "C", "fvm": 31},
+            {"name": "BARELLA", "team": "INT", "role": "C", "fvm": 27},
+            {"name": "DA CUNHA", "team": "COM", "role": "C", "fvm": 26},
+            {"name": "VLASIC", "team": "TOR", "role": "C", "fvm": 24},
+            {"name": "EDERSON", "team": "ATA", "role": "C", "fvm": 23},
+            {"name": "MCKENNIE", "team": "JUV", "role": "C", "fvm": 23},
+            {"name": "WESLEY", "team": "ROM", "role": "C", "fvm": 23},
+            {"name": "ATTA", "team": "FIO", "role": "C", "fvm": 22},
+            {"name": "CONCEICAO", "team": "JUV", "role": "C", "fvm": 22},
+            {"name": "MASTANTUONO", "team": "FIO", "role": "C", "fvm": 22},
+            {"name": "MODRIC", "team": "MIL", "role": "C", "fvm": 21},
+            {"name": "MOLINA", "team": "ROM", "role": "C", "fvm": 21},
+            {"name": "SAMARDZIC", "team": "ATA", "role": "C", "fvm": 21},
+            {"name": "ZIELINSKI", "team": "INT", "role": "C", "fvm": 21},
+            {"name": "GONCALVES", "team": "FIO", "role": "C", "fvm": 20},
+            {"name": "KONE", "team": "ROM", "role": "C", "fvm": 20},
+            {"name": "TAYLOR", "team": "LAZ", "role": "C", "fvm": 20},
+            {"name": "FRATTESI", "team": "LAZ", "role": "C", "fvm": 19},
+            {"name": "PELLEGRINI", "team": "ROM", "role": "C", "fvm": 19},
+            {"name": "ANGUISSA", "team": "NAP", "role": "C", "fvm": 18},
+            {"name": "DA SILVA MOREIRA", "team": "MIL", "role": "C", "fvm": 18},
+            {"name": "EKKELENKAMP", "team": "UDI", "role": "C", "fvm": 18},
+            {"name": "JONES", "team": "INT", "role": "C", "fvm": 18},
+            {"name": "MANDRAGORA", "team": "TOR", "role": "C", "fvm": 18},
+            {"name": "PERRONE", "team": "COM", "role": "C", "fvm": 18},
+            {"name": "SAELEMAEKERS", "team": "MIL", "role": "C", "fvm": 18},
+            {"name": "BALDANZI", "team": "GEN", "role": "C", "fvm": 17},
+            {"name": "SPENCE", "team": "INT", "role": "C", "fvm": 17},
+            {"name": "SUCIC", "team": "INT", "role": "C", "fvm": 17},
+            {"name": "THORSTVEDT", "team": "SAS", "role": "C", "fvm": 17},
+            {"name": "THURAM", "team": "JUV", "role": "C", "fvm": 17},
+            {"name": "CASADEI", "team": "TOR", "role": "C", "fvm": 16},
+            {"name": "HUTCHINSON", "team": "MIL", "role": "C", "fvm": 16},
+            {"name": "KESSIE", "team": "ATA", "role": "C", "fvm": 16},
+            {"name": "PASALIC", "team": "ATA", "role": "C", "fvm": 16},
+            {"name": "COLPANI", "team": "MON", "role": "C", "fvm": 15},
+            {"name": "CRISTANTE", "team": "ROM", "role": "C", "fvm": 15},
+            {"name": "ELMAS", "team": "ATA", "role": "C", "fvm": 15},
+            {"name": "FAGIOLI", "team": "FIO", "role": "C", "fvm": 15},
+            {"name": "FERGUSON", "team": "BOL", "role": "C", "fvm": 15},
+            {"name": "KARLSTROM", "team": "UDI", "role": "C", "fvm": 15},
+            {"name": "LOBOTKA", "team": "NAP", "role": "C", "fvm": 15},
+            {"name": "LOCATELLI", "team": "JUV", "role": "C", "fvm": 15},
+            {"name": "VERGARA", "team": "NAP", "role": "C", "fvm": 15},
+            {"name": "VOLPATO", "team": "SAS", "role": "C", "fvm": 15},
+            {"name": "BERNABE", "team": "PAR", "role": "C", "fvm": 14},
+            {"name": "CALO", "team": "FRO", "role": "C", "fvm": 14},
+            {"name": "CAMBIASO", "team": "JUV", "role": "C", "fvm": 14},
+            {"name": "CHUKWUEZE", "team": "MIL", "role": "C", "fvm": 14},
+            {"name": "SCHMID", "team": "FRO", "role": "C", "fvm": 14},
+            {"name": "SOW", "team": "GEN", "role": "C", "fvm": 14},
+            {"name": "CAQUERET", "team": "COM", "role": "C", "fvm": 13},
+            {"name": "GAETANO", "team": "ATA", "role": "C", "fvm": 13},
+            {"name": "KAMARA", "team": "UDI", "role": "C", "fvm": 13},
+            {"name": "KONE", "team": "SAS", "role": "C", "fvm": 13},
+            {"name": "KOOPMEINERS", "team": "JUV", "role": "C", "fvm": 13},
+            {"name": "PISILLI", "team": "ROM", "role": "C", "fvm": 13},
+            {"name": "UNAI GOMEZ", "team": "UDI", "role": "C", "fvm": 13},
+            {"name": "ZALEWSKI", "team": "ATA", "role": "C", "fvm": 13},
+            {"name": "ZAPPACOSTA", "team": "ATA", "role": "C", "fvm": 13},
+            {"name": "ADOPO", "team": "CAG", "role": "C", "fvm": 12},
+            {"name": "BUSIO", "team": "VEN", "role": "C", "fvm": 12},
+            {"name": "DODO", "team": "FIO", "role": "C", "fvm": 12},
+            {"name": "FAZZINI", "team": "CAG", "role": "C", "fvm": 12},
+            {"name": "FRENDRUP", "team": "GEN", "role": "C", "fvm": 12},
+            {"name": "NDOUR", "team": "FIO", "role": "C", "fvm": 12},
+            {"name": "PIOTROWSKI", "team": "UDI", "role": "C", "fvm": 12},
+            {"name": "SPINAZZOLA", "team": "NAP", "role": "C", "fvm": 12},
+            {"name": "ADZIC", "team": "SAS", "role": "C", "fvm": 11},
+            {"name": "CARLOS AUGUSTO", "team": "INT", "role": "C", "fvm": 11},
+            {"name": "DIOUF", "team": "INT", "role": "C", "fvm": 11},
+            {"name": "MATIC", "team": "SAS", "role": "C", "fvm": 11},
+            {"name": "MKHITARYAN", "team": "INT", "role": "C", "fvm": 11},
+            {"name": "PESSINA", "team": "MON", "role": "C", "fvm": 11},
+            {"name": "POBEGA", "team": "BOL", "role": "C", "fvm": 11},
+            {"name": "SARR", "team": "JUV", "role": "C", "fvm": 11},
+            {"name": "WINKS", "team": "CAG", "role": "C", "fvm": 11},
+            {"name": "ZHEGROVA", "team": "JUV", "role": "C", "fvm": 11},
+            {"name": "BASIC", "team": "VEN", "role": "C", "fvm": 10},
+            {"name": "BELGHALI", "team": "TOR", "role": "C", "fvm": 10},
+            {"name": "BRAGANCA", "team": "TOR", "role": "C", "fvm": 10},
+            {"name": "COULIBALY", "team": "LEC", "role": "C", "fvm": 10},
+            {"name": "DE ROON", "team": "ROM", "role": "C", "fvm": 10},
+            {"name": "ELLERTSSON", "team": "GEN", "role": "C", "fvm": 10},
+            {"name": "JASHARI", "team": "MIL", "role": "C", "fvm": 10},
+            {"name": "KEITA", "team": "PAR", "role": "C", "fvm": 10},
+            {"name": "LIBERALI", "team": "COM", "role": "C", "fvm": 10},
+            {"name": "MILLA", "team": "COM", "role": "C", "fvm": 10},
+            {"name": "OULAI", "team": "FIO", "role": "C", "fvm": 10},
+            {"name": "PEREZ", "team": "VEN", "role": "C", "fvm": 10},
+            {"name": "ROMANO", "team": "CAG", "role": "C", "fvm": 10},
+            {"name": "ROVELLA", "team": "LAZ", "role": "C", "fvm": 10},
+            {"name": "AKINSANMIRO", "team": "MON", "role": "C", "fvm": 9},
+            {"name": "BERNASCONI", "team": "ATA", "role": "C", "fvm": 9},
+            {"name": "CACCIAMANI", "team": "TOR", "role": "C", "fvm": 9},
+            {"name": "DELE-BASHIRU", "team": "LAZ", "role": "C", "fvm": 9},
+            {"name": "FELICI", "team": "CAG", "role": "C", "fvm": 9},
+            {"name": "GANDELMAN", "team": "LEC", "role": "C", "fvm": 9},
+            {"name": "GINEITIS", "team": "TOR", "role": "C", "fvm": 9},
+            {"name": "LOFTUS-CHEEK", "team": "MIL", "role": "C", "fvm": 9},
+            {"name": "LUIS HENRIQUE", "team": "INT", "role": "C", "fvm": 9},
+            {"name": "MANGAS", "team": "MON", "role": "C", "fvm": 9},
+            {"name": "MORO", "team": "BOL", "role": "C", "fvm": 9},
+            {"name": "NICOLUSSI CAVIGL.", "team": "PAR", "role": "C", "fvm": 9},
+            {"name": "PATTERSON", "team": "TOR", "role": "C", "fvm": 9},
+            {"name": "TRAORE", "team": "GEN", "role": "C", "fvm": 9},
+            {"name": "ZERBIN", "team": "FRO", "role": "C", "fvm": 9},
+            {"name": "ZORTEA", "team": "BOL", "role": "C", "fvm": 9},
+            {"name": "AMORIM", "team": "GEN", "role": "C", "fvm": 8},
+            {"name": "BAKOLA", "team": "SAS", "role": "C", "fvm": 8},
+            {"name": "BELLANOVA", "team": "ATA", "role": "C", "fvm": 8},
+            {"name": "BERISHA", "team": "LEC", "role": "C", "fvm": 8},
+            {"name": "BRESCIANINI", "team": "FIO", "role": "C", "fvm": 8},
+            {"name": "CATALDI", "team": "LAZ", "role": "C", "fvm": 8},
+            {"name": "DOUGLAS LUIZ", "team": "JUV", "role": "C", "fvm": 8},
+            {"name": "FABBIAN", "team": "PAR", "role": "C", "fvm": 8},
+            {"name": "FADERA", "team": "CAG", "role": "C", "fvm": 8},
+            {"name": "FAVASULI", "team": "NAP", "role": "C", "fvm": 8},
+            {"name": "FITZ-JIM", "team": "TOR", "role": "C", "fvm": 8},
+            {"name": "GRILLITSCH", "team": "FRO", "role": "C", "fvm": 8},
+            {"name": "ILKHAN", "team": "TOR", "role": "C", "fvm": 8},
+            {"name": "KRISTENSEN", "team": "ATA", "role": "C", "fvm": 8},
+            {"name": "MEICHTRY", "team": "GEN", "role": "C", "fvm": 8},
+            {"name": "OLIVERA", "team": "NAP", "role": "C", "fvm": 8},
+            {"name": "SOHM", "team": "VEN", "role": "C", "fvm": 8},
+            {"name": "SUGAWARA", "team": "CAG", "role": "C", "fvm": 8},
+            {"name": "TOURE", "team": "MON", "role": "C", "fvm": 8},
+            {"name": "AMONDARAIN", "team": "BOL", "role": "C", "fvm": 7},
+            {"name": "BIRINDELLI", "team": "MON", "role": "C", "fvm": 7},
+            {"name": "BONDO", "team": "MIL", "role": "C", "fvm": 7},
+            {"name": "CICHELLA", "team": "FRO", "role": "C", "fvm": 7},
+            {"name": "FOLORUNSHO", "team": "MON", "role": "C", "fvm": 7},
+            {"name": "GILMOUR", "team": "NAP", "role": "C", "fvm": 7},
+            {"name": "HAPS", "team": "VEN", "role": "C", "fvm": 7},
+            {"name": "MASINI", "team": "FRO", "role": "C", "fvm": 7},
+            {"name": "MESSIAS", "team": "GEN", "role": "C", "fvm": 7},
+            {"name": "MILLER", "team": "UDI", "role": "C", "fvm": 7},
+            {"name": "NGOM", "team": "LEC", "role": "C", "fvm": 7},
+            {"name": "PARISI", "team": "FIO", "role": "C", "fvm": 7},
+            {"name": "RICCI", "team": "COM", "role": "C", "fvm": 7},
+            {"name": "SAGRADO", "team": "VEN", "role": "C", "fvm": 7},
+            {"name": "SULEMANA", "team": "SAS", "role": "C", "fvm": 7},
+            {"name": "CIURRIA", "team": "MON", "role": "C", "fvm": 6},
+            {"name": "COLOMBO", "team": "MON", "role": "C", "fvm": 6},
+            {"name": "DEIOLA", "team": "CAG", "role": "C", "fvm": 6},
+            {"name": "EHIZIBUE", "team": "GEN", "role": "C", "fvm": 6},
+            {"name": "FORTINI", "team": "TOR", "role": "C", "fvm": 6},
+            {"name": "GAGLIARDINI", "team": "CAG", "role": "C", "fvm": 6},
+            {"name": "GELLI", "team": "FRO", "role": "C", "fvm": 6},
+            {"name": "JOAO MARIO", "team": "FIO", "role": "C", "fvm": 6},
+            {"name": "LOVRIC", "team": "UDI", "role": "C", "fvm": 6},
+            {"name": "MALEH", "team": "LEC", "role": "C", "fvm": 6},
+            {"name": "MAZZITELLI", "team": "COM", "role": "C", "fvm": 6},
+            {"name": "MUSAH", "team": "MIL", "role": "C", "fvm": 6},
+            {"name": "ORDONEZ", "team": "PAR", "role": "C", "fvm": 6},
+            {"name": "RODRIGUEZ", "team": "TOR", "role": "C", "fvm": 6},
+            {"name": "SIERRO", "team": "PAR", "role": "C", "fvm": 6},
+            {"name": "STANKOVIC", "team": "INT", "role": "C", "fvm": 6},
+            {"name": "TERRACCIANO", "team": "MIL", "role": "C", "fvm": 6},
+            {"name": "VENTURINO", "team": "GEN", "role": "C", "fvm": 6},
+            {"name": "ARIZALA", "team": "UDI", "role": "C", "fvm": 5},
+            {"name": "COMOTTO", "team": "MIL", "role": "C", "fvm": 5},
+            {"name": "DRAMEH", "team": "GEN", "role": "C", "fvm": 5},
+            {"name": "DUNCAN", "team": "VEN", "role": "C", "fvm": 5},
+            {"name": "FLORIANI MUSSOLI.", "team": "LAZ", "role": "C", "fvm": 5},
+            {"name": "GORTER", "team": "LEC", "role": "C", "fvm": 5},
+            {"name": "HASA", "team": "FRO", "role": "C", "fvm": 5},
+            {"name": "HELGASON", "team": "VEN", "role": "C", "fvm": 5},
+            {"name": "LIPANI", "team": "SAS", "role": "C", "fvm": 5},
+            {"name": "SALAH-EDDINE", "team": "ROM", "role": "C", "fvm": 5},
+            {"name": "ZANOLI", "team": "UDI", "role": "C", "fvm": 5},
+            {"name": "AURELIO", "team": "CAG", "role": "C", "fvm": 4},
+            {"name": "BELAHYANE", "team": "LAZ", "role": "C", "fvm": 4},
+            {"name": "BIRAGHI", "team": "TOR", "role": "C", "fvm": 4},
+            {"name": "BOLOCA", "team": "SAS", "role": "C", "fvm": 4},
+            {"name": "CABAL", "team": "JUV", "role": "C", "fvm": 4},
+            {"name": "CHAKVETADZE", "team": "UDI", "role": "C", "fvm": 4},
+            {"name": "EL AZZOUZI", "team": "BOL", "role": "C", "fvm": 4},
+            {"name": "FORSON", "team": "MON", "role": "C", "fvm": 4},
+            {"name": "IDRISSI", "team": "CAG", "role": "C", "fvm": 4},
+            {"name": "ILIC", "team": "LEC", "role": "C", "fvm": 4},
+            {"name": "MASSOLIN", "team": "CAG", "role": "C", "fvm": 4},
+            {"name": "SABELLI", "team": "GEN", "role": "C", "fvm": 4},
+            {"name": "ZARRAGA", "team": "UDI", "role": "C", "fvm": 4},
+            {"name": "BAKOUNE", "team": "MON", "role": "C", "fvm": 3},
+            {"name": "CIERVO", "team": "CAG", "role": "C", "fvm": 3},
+            {"name": "CREMASCHI", "team": "PAR", "role": "C", "fvm": 3},
+            {"name": "FOE ONDOA", "team": "MON", "role": "C", "fvm": 3},
+            {"name": "GHION", "team": "SAS", "role": "C", "fvm": 3},
+            {"name": "KONE", "team": "FRO", "role": "C", "fvm": 3},
+            {"name": "LULLI", "team": "ROM", "role": "C", "fvm": 3},
+            {"name": "MAZZOCCHI", "team": "VEN", "role": "C", "fvm": 3},
+            {"name": "BAKKER", "team": "ATA", "role": "C", "fvm": 2},
+            {"name": "DEMBELE", "team": "LEC", "role": "C", "fvm": 2},
+            {"name": "FOFANA", "team": "LEC", "role": "C", "fvm": 2},
+            {"name": "KABA", "team": "LEC", "role": "C", "fvm": 2},
+            {"name": "LUONGO", "team": "TOR", "role": "C", "fvm": 2},
+            {"name": "MOUT", "team": "MON", "role": "C", "fvm": 2},
+            {"name": "AKARAKIRI", "team": "CAG", "role": "C", "fvm": 1},
+            {"name": "DAGASSO", "team": "VEN", "role": "C", "fvm": 1},
+            {"name": "EL AZZOUZI", "team": "FRO", "role": "C", "fvm": 1},
+            {"name": "FARCOMENI", "team": "LAZ", "role": "C", "fvm": 1},
+            {"name": "GALASSI", "team": "LAZ", "role": "C", "fvm": 1},
+            {"name": "KONATE", "team": "PAR", "role": "C", "fvm": 1},
+            {"name": "KOVAC", "team": "LEC", "role": "C", "fvm": 1},
+            {"name": "LAHDO", "team": "COM", "role": "C", "fvm": 1},
+            {"name": "LITETA", "team": "CAG", "role": "C", "fvm": 1},
+            {"name": "PRZYBOREK", "team": "LAZ", "role": "C", "fvm": 1},
+            {"name": "WIAFE", "team": "GEN", "role": "C", "fvm": 1},
+            {"name": "DABO", "team": "VEN", "role": "C", "fvm": 0},
+
+            // ATTACCANTI (127)
+            {"name": "MALEN", "team": "ROM", "role": "A", "fvm": 60},
+            {"name": "MARTINEZ", "team": "INT", "role": "A", "fvm": 56},
+            {"name": "HOJLUND", "team": "NAP", "role": "A", "fvm": 49},
+            {"name": "THURAM", "team": "INT", "role": "A", "fvm": 47},
+            {"name": "RAMOS", "team": "MIL", "role": "A", "fvm": 46},
+            {"name": "PAZ", "team": "COM", "role": "A", "fvm": 44},
+            {"name": "WOLTEMADE", "team": "JUV", "role": "A", "fvm": 42},
+            {"name": "KOLO MUANI", "team": "JUV", "role": "A", "fvm": 41},
+            {"name": "KEAN", "team": "COM", "role": "A", "fvm": 40},
+            {"name": "DOUVIKAS", "team": "COM", "role": "A", "fvm": 39},
+            {"name": "PULISIC", "team": "MIL", "role": "A", "fvm": 36},
+            {"name": "YILDIZ", "team": "JUV", "role": "A", "fvm": 34},
+            {"name": "DAVIS", "team": "UDI", "role": "A", "fvm": 33},
+            {"name": "ORSOLINI", "team": "BOL", "role": "A", "fvm": 33},
+            {"name": "SCAMACCA", "team": "ATA", "role": "A", "fvm": 33},
+            {"name": "BERARDI", "team": "SAS", "role": "A", "fvm": 32},
+            {"name": "DYBALA", "team": "ROM", "role": "A", "fvm": 32},
+            {"name": "KRSTOVIC", "team": "ATA", "role": "A", "fvm": 31},
+            {"name": "ESPOSITO FP", "team": "INT", "role": "A", "fvm": 29},
+            {"name": "SIMEONE", "team": "TOR", "role": "A", "fvm": 28},
+            {"name": "SOULE", "team": "ROM", "role": "A", "fvm": 28},
+            {"name": "CASTRO", "team": "ROM", "role": "A", "fvm": 27},
+            {"name": "DE KETELAERE", "team": "ATA", "role": "A", "fvm": 27},
+            {"name": "LAURIENTE", "team": "SAS", "role": "A", "fvm": 27},
+            {"name": "ZACCAGNI", "team": "LAZ", "role": "A", "fvm": 27},
+            {"name": "ZANIOLO", "team": "UDI", "role": "A", "fvm": 27},
+            {"name": "DIAO", "team": "COM", "role": "A", "fvm": 26},
+            {"name": "DOVBYK", "team": "BOL", "role": "A", "fvm": 25},
+            {"name": "GUDMUNDSSON", "team": "LAZ", "role": "A", "fvm": 25},
+            {"name": "MORA CARVALHO", "team": "ROM", "role": "A", "fvm": 25},
+            {"name": "PINAMONTI", "team": "LAZ", "role": "A", "fvm": 25},
+            {"name": "RASPADORI", "team": "ATA", "role": "A", "fvm": 24},
+            {"name": "BETO", "team": "FIO", "role": "A", "fvm": 21},
+            {"name": "COLOMBO", "team": "GEN", "role": "A", "fvm": 21},
+            {"name": "ESPOSITO S", "team": "SAS", "role": "A", "fvm": 21},
+            {"name": "POLITANO", "team": "NAP", "role": "A", "fvm": 21},
+            {"name": "RAIMONDO", "team": "FRO", "role": "A", "fvm": 21},
+            {"name": "ADAMS", "team": "TOR", "role": "A", "fvm": 20},
+            {"name": "RODRIGUEZ", "team": "COM", "role": "A", "fvm": 20},
+            {"name": "ROWE", "team": "ATA", "role": "A", "fvm": 20},
+            {"name": "ALAJBEGOVIC", "team": "JUV", "role": "A", "fvm": 19},
+            {"name": "YEBOAH", "team": "VEN", "role": "A", "fvm": 18},
+            {"name": "PICCOLI", "team": "BOL", "role": "A", "fvm": 17},
+            {"name": "BOWIE", "team": "SAS", "role": "A", "fvm": 16},
+            {"name": "PELLEGRINO", "team": "FIO", "role": "A", "fvm": 16},
+            {"name": "VITINHA", "team": "GEN", "role": "A", "fvm": 16},
+            {"name": "BERNARDESCHI", "team": "BOL", "role": "A", "fvm": 15},
+            {"name": "BONNY", "team": "INT", "role": "A", "fvm": 15},
+            {"name": "CUTRONE", "team": "MON", "role": "A", "fvm": 15},
+            {"name": "ISAKSEN", "team": "LAZ", "role": "A", "fvm": 15},
+            {"name": "ODGAARD", "team": "BOL", "role": "A", "fvm": 15},
+            {"name": "SANTOS", "team": "NAP", "role": "A", "fvm": 15},
+            {"name": "STULIC", "team": "LEC", "role": "A", "fvm": 15},
+            {"name": "ZAPATA", "team": "TOR", "role": "A", "fvm": 15},
+            {"name": "ADAMS", "team": "VEN", "role": "A", "fvm": 14},
+            {"name": "CAMBIAGHI", "team": "BOL", "role": "A", "fvm": 14},
+            {"name": "CANCELLIERI", "team": "LAZ", "role": "A", "fvm": 14},
+            {"name": "GHEDJEMIS", "team": "FRO", "role": "A", "fvm": 14},
+            {"name": "KEVIN CARLOS", "team": "CAG", "role": "A", "fvm": 14},
+            {"name": "BOGA", "team": "JUV", "role": "A", "fvm": 13},
+            {"name": "KVERNADZE", "team": "FRO", "role": "A", "fvm": 13},
+            {"name": "MALDINI", "team": "CAG", "role": "A", "fvm": 13},
+            {"name": "NERES", "team": "NAP", "role": "A", "fvm": 13},
+            {"name": "ROMERO", "team": "PAR", "role": "A", "fvm": 13},
+            {"name": "BOBCEK", "team": "FRO", "role": "A", "fvm": 12},
+            {"name": "GEUBBELS", "team": "LEC", "role": "A", "fvm": 12},
+            {"name": "NOSLIN", "team": "LAZ", "role": "A", "fvm": 12},
+            {"name": "PIEROTTI", "team": "LEC", "role": "A", "fvm": 12},
+            {"name": "EL SHAARAWY", "team": "GEN", "role": "A", "fvm": 11},
+            {"name": "ORISTANIO", "team": "TOR", "role": "A", "fvm": 11},
+            {"name": "OSMAJIC", "team": "GEN", "role": "A", "fvm": 11},
+            {"name": "ROBINSON", "team": "MON", "role": "A", "fvm": 11},
+            {"name": "RRAHMANI", "team": "VEN", "role": "A", "fvm": 11},
+            {"name": "SULEMANA", "team": "ATA", "role": "A", "fvm": 11},
+            {"name": "ADDAI", "team": "COM", "role": "A", "fvm": 10},
+            {"name": "GNONTO", "team": "FIO", "role": "A", "fvm": 10},
+            {"name": "GONZALEZ", "team": "JUV", "role": "A", "fvm": 10},
+            {"name": "MBANGULA", "team": "BOL", "role": "A", "fvm": 10},
+            {"name": "VARELA", "team": "MON", "role": "A", "fvm": 10},
+            {"name": "ADORANTE", "team": "VEN", "role": "A", "fvm": 9},
+            {"name": "DANY MOTA", "team": "MON", "role": "A", "fvm": 9},
+            {"name": "GIOVANE", "team": "NAP", "role": "A", "fvm": 9},
+            {"name": "LUCCA", "team": "NAP", "role": "A", "fvm": 9},
+            {"name": "NJIE", "team": "FIO", "role": "A", "fvm": 9},
+            {"name": "BIRLIGEA", "team": "FRO", "role": "A", "fvm": 8},
+            {"name": "CAMARDA", "team": "MIL", "role": "A", "fvm": 8},
+            {"name": "CISSE", "team": "MIL", "role": "A", "fvm": 8},
+            {"name": "DOMINGUEZ", "team": "SAS", "role": "A", "fvm": 8},
+            {"name": "FRIGAN", "team": "PAR", "role": "A", "fvm": 8},
+            {"name": "HAVEL", "team": "GEN", "role": "A", "fvm": 8},
+            {"name": "KULENOVIC", "team": "TOR", "role": "A", "fvm": 8},
+            {"name": "NZOLA", "team": "CAG", "role": "A", "fvm": 8},
+            {"name": "ZEBALLOS", "team": "MON", "role": "A", "fvm": 8},
+            {"name": "ALMQVIST", "team": "PAR", "role": "A", "fvm": 7},
+            {"name": "EKHATOR", "team": "JUV", "role": "A", "fvm": 7},
+            {"name": "GUEYE", "team": "UDI", "role": "A", "fvm": 7},
+            {"name": "LANG", "team": "NAP", "role": "A", "fvm": 7},
+            {"name": "LONTANI", "team": "PAR", "role": "A", "fvm": 7},
+            {"name": "MONTEIRO", "team": "LEC", "role": "A", "fvm": 7},
+            {"name": "NGONGE", "team": "MON", "role": "A", "fvm": 7},
+            {"name": "N’DRI", "team": "LEC", "role": "A", "fvm": 7},
+            {"name": "SOTTIL", "team": "FIO", "role": "A", "fvm": 7},
+            {"name": "BALDE", "team": "MON", "role": "A", "fvm": 6},
+            {"name": "ELPHEGE", "team": "PAR", "role": "A", "fvm": 6},
+            {"name": "FINI", "team": "FRO", "role": "A", "fvm": 6},
+            {"name": "JOVANOVIC", "team": "UDI", "role": "A", "fvm": 6},
+            {"name": "TOURE", "team": "PAR", "role": "A", "fvm": 6},
+            {"name": "ABOUKHLAL", "team": "TOR", "role": "A", "fvm": 5},
+            {"name": "ENEM", "team": "BOL", "role": "A", "fvm": 5},
+            {"name": "FATAH", "team": "LEC", "role": "A", "fvm": 5},
+            {"name": "FERNANDEZ", "team": "VEN", "role": "A", "fvm": 5},
+            {"name": "KARLSSON", "team": "BOL", "role": "A", "fvm": 5},
+            {"name": "MENDY", "team": "CAG", "role": "A", "fvm": 5},
+            {"name": "DE SOUZA JÚNIOR", "team": "GEN", "role": "A", "fvm": 4},
+            {"name": "DIALLO THIAO", "team": "PAR", "role": "A", "fvm": 4},
+            {"name": "MILIK", "team": "JUV", "role": "A", "fvm": 4},
+            {"name": "BAYO", "team": "UDI", "role": "A", "fvm": 3},
+            {"name": "LISMAN", "team": "VEN", "role": "A", "fvm": 2},
+            {"name": "PIERINI", "team": "SAS", "role": "A", "fvm": 2},
+            {"name": "SKJELLERUP", "team": "SAS", "role": "A", "fvm": 2},
+            {"name": "DE MARTIS DE LA .", "team": "PAR", "role": "A", "fvm": 1},
+            {"name": "LAERKE", "team": "LEC", "role": "A", "fvm": 1},
+            {"name": "LAUBERBACH", "team": "VEN", "role": "A", "fvm": 1},
+            {"name": "SUGAMELE", "team": "CAG", "role": "A", "fvm": 1},
+            {"name": "TREPY", "team": "CAG", "role": "A", "fvm": 1},
+            {"name": "VINCIATI", "team": "UDI", "role": "A", "fvm": 1},
+            {"name": "PEJICIC", "team": "UDI", "role": "A", "fvm": 0}
+        ];
+
+        // --- STATO APPLICAZIONE ---
         let myCredits = 500;
         let totalSpent = 0;
         let currentBid = 1;
-        let currentPlayer = { name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 95 };
+        let currentPlayer = null;
         let mySquad = { P: [], D: [], C: [], A: [] };
-
-        const defaultPlayers = [
-            { name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 95 },
-            { name: "Vlahovic", team: "Juventus", role: "A", fvm: 80 },
-            { name: "Lookman", team: "Atalanta", role: "A", fvm: 75 },
-            { name: "Pulisic", team: "Milan", role: "C", fvm: 40 },
-            { name: "Maignan", team: "Milan", role: "P", fvm: 35 },
-            { name: "Barella", team: "Inter", role: "C", fvm: 35 },
-            { name: "Sommer", team: "Inter", role: "P", fvm: 30 },
-            { name: "Dimarco", team: "Inter", role: "D", fvm: 28 },
-            { name: "Di Lorenzo", team: "Napoli", role: "D", fvm: 22 }
-        ];
-
         let playersList = [...defaultPlayers];
 
-        // Riconoscimento flessibile ed esaustivo del ruolo
+        // --- RICONOSCIMENTO RUOLO ---
         function parseRole(rawRole) {
             if (!rawRole) return null;
-            const str = rawRole.toString().trim().toUpperCase();
-            
-            if (['P', 'POR', 'PORTIERE', 'GOALKEEPER', 'GK'].includes(str) || str.startsWith('POR')) return 'P';
-            if (['D', 'DIF', 'DIFENSORE', 'DEFENDER', 'DEF'].includes(str) || str.startsWith('DIF')) return 'D';
-            if (['C', 'CEN', 'CENTROCAMPISTA', 'MIDFIELDER', 'MID'].includes(str) || str.startsWith('CEN')) return 'C';
-            if (['A', 'ATT', 'ATTACCANTE', 'FORWARD', 'FW', 'STR'].includes(str) || str.startsWith('ATT')) return 'A';
-            
-            if (str.includes('P')) return 'P';
-            if (str.includes('D')) return 'D';
-            if (str.includes('C')) return 'C';
-            if (str.includes('A')) return 'A';
-
+            const str = rawRole.toString().trim().toUpperCase().replace(/[^A-Z]/g, '');
+            if (['P', 'POR', 'PORTIERE'].includes(str) || str.startsWith('POR')) return 'P';
+            if (['D', 'DIF', 'DIFENSORE'].includes(str) || str.startsWith('DIF')) return 'D';
+            if (['C', 'CEN', 'CENTROCAMPISTA'].includes(str) || str.startsWith('CEN')) return 'C';
+            if (['A', 'ATT', 'ATTACCANTE'].includes(str) || str.startsWith('ATT')) return 'A';
             return null;
         }
 
@@ -322,7 +876,7 @@
             updateDatalist();
         }
 
-        // --- AGGIORNAMENTO DATALIST AUTOCOMPLETE ---
+        // --- AUTOCOMPLETE DATALIST ---
         function updateDatalist() {
             const datalist = document.getElementById('players-datalist');
             datalist.innerHTML = "";
@@ -346,14 +900,14 @@
                 const roleMap = { 'P': 'Portiere', 'D': 'Difensore', 'C': 'Centrocampista', 'A': 'Attaccante' };
                 const roleName = roleMap[found.role] || found.role;
                 
-                document.getElementById('player-team').innerText = `${found.team} - ${roleName} (${found.role})`;
+                document.getElementById('player-team').innerText = `${found.team} - ${roleName} (${found.role}) - FVM: ${found.fvm}`;
                 
                 currentBid = 1;
                 document.getElementById('current-bid').innerText = "1 FM";
                 document.getElementById('bid-input').value = "1";
                 document.getElementById('highest-bidder').innerText = "Nessuno";
 
-                addChatMessage("Sistema", `📣 Chiamato in asta: ${found.name} (${found.team})`);
+                addChatMessage("Sistema", `📣 Chiamato in asta: ${found.name} (${found.team}) - ${found.role}`);
                 document.getElementById('live-search-input').value = "";
             }
         }
@@ -364,77 +918,42 @@
             }
         }
 
-        // --- CARICAMENTO E PARSING INTELLIGENTE DEL FILE ---
+        // --- OPZIONALE: CARICAMENTO FILE ESTERNO ---
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-
             reader.onload = function(e) {
-                const content = e.target.result;
                 try {
                     if (file.name.endsWith('.json')) {
-                        const parsedJson = JSON.parse(content);
-                        playersList = parsedJson.map(item => ({
-                            name: item.name || item.Nome || item.giocatore || "Sconosciuto",
-                            team: item.team || item.Squadra || item.squadra || "-",
-                            role: parseRole(item.role || item.Ruolo || item.ruolo || item.R) || 'A',
-                            fvm: parseInt(item.fvm || item.FVM || item.Quotazione || item.qt) || 1
-                        }));
+                        playersList = JSON.parse(e.target.result);
                     } else {
-                        const lines = content.split(/\r?\n/);
+                        const lines = e.target.result.split(/\r?\n/);
                         const parsed = [];
-                        
                         lines.forEach(line => {
-                            if (!line.trim()) return;
-                            const delimiter = line.includes(';') ? ';' : ',';
-                            const parts = line.split(delimiter).map(p => p.replace(/"/g, '').trim());
-                            
-                            // Ignora riga d'intestazione
-                            const lineStr = line.toLowerCase();
-                            if (lineStr.includes("nome") && (lineStr.includes("ruolo") || lineStr.includes("squadra"))) return;
-
-                            if (parts.length >= 4) {
-                                let name = "", team = "", role = null, fvm = 1;
-
-                                // Identificazione automatica delle colonne
-                                parts.forEach(part => {
-                                    const detectedRole = parseRole(part);
-                                    if (detectedRole && !role && part.length <= 12) {
-                                        role = detectedRole;
-                                    } else if (!isNaN(parseInt(part)) && parseInt(part) > 0 && fvm === 1) {
-                                        fvm = parseInt(part);
-                                    } else if (!name) {
-                                        name = part;
-                                    } else if (!team) {
-                                        team = part;
-                                    }
-                                });
-
-                                // Fallback all'ordine standard se il parsing dinamico fallisce
-                                if (!role) role = parseRole(parts[2]) || parseRole(parts[0]) || 'A';
-                                if (!name) name = parts[0];
-                                if (!team) team = parts[1];
-
-                                parsed.push({ name, team, role, fvm });
+                            const parts = line.split(/[;,]/).map(p => p.trim());
+                            if (parts.length >= 3) {
+                                const role = parseRole(parts[2]) || parseRole(parts[0]);
+                                if (role) {
+                                    parsed.push({
+                                        name: parts[0],
+                                        team: parts[1] || "-",
+                                        role: role,
+                                        fvm: parseInt(parts[3]) || 1
+                                    });
+                                }
                             }
                         });
-
-                        if (parsed.length > 0) {
-                            playersList = parsed;
-                        } else {
-                            throw new Error("Impossibile leggere il file CSV.");
-                        }
+                        if (parsed.length > 0) playersList = parsed;
                     }
-                    alert(`Caricati ${playersList.length} giocatori con successo!`);
+                    alert(`Listone aggiornato con ${playersList.length} giocatori!`);
                     filterListone();
                     updateDatalist();
-                } catch (err) {
-                    alert("Errore nella lettura del file. Assicurati che sia in formato CSV o JSON.");
+                } catch(err) {
+                    alert("Errore nel formato del file.");
                 }
             };
-
             reader.readAsText(file);
         }
 
@@ -442,7 +961,7 @@
             playersList = [...defaultPlayers];
             filterListone();
             updateDatalist();
-            alert("Listone ripristinato a quello di default.");
+            alert("Listone ripristinato al predefinito (563 giocatori).");
         }
 
         // --- LOGICA ASTA E PUNTATE ---
@@ -452,6 +971,10 @@
         }
 
         function placeBid() {
+            if (!currentPlayer) {
+                alert("Seleziona prima un giocatore da chiamare in asta!");
+                return;
+            }
             let val = parseInt(document.getElementById('bid-input').value);
             if (val > myCredits) {
                 alert("Non hai abbastanza crediti!");
@@ -468,6 +991,10 @@
         }
 
         function assignPlayer() {
+            if (!currentPlayer) {
+                alert("Nessun giocatore in asta!");
+                return;
+            }
             const user = document.getElementById('username-input').value;
             const highestBidder = document.getElementById('highest-bidder').innerText;
 
@@ -487,6 +1014,9 @@
             addChatMessage("Sistema", `🎉 ${currentPlayer.name} acquistato da ${user} per ${currentBid} FM!`);
             updateRosaUI();
 
+            currentPlayer = null;
+            document.getElementById('player-name').innerText = "Seleziona un giocatore";
+            document.getElementById('player-team').innerText = "Usa la barra sopra per chiamare in asta";
             currentBid = 1;
             document.getElementById('current-bid').innerText = "1 FM";
             document.getElementById('bid-input').value = "1";
