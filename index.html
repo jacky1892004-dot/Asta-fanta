@@ -8,7 +8,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #fff; }
 
-        /* HEADER & NAVBAR */
         header {
             background: #1e1e1e;
             padding: 15px 20px;
@@ -20,16 +19,14 @@
         .logo { font-weight: bold; font-size: 1.2rem; color: #00e676; }
         .hamburger { font-size: 24px; cursor: pointer; user-select: none; }
 
-        /* MENU LATERALE */
         .sidebar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; z-index: 99;
         }
         .sidebar {
             position: fixed; top: 0; right: -100%;
-            width: 20%; min-width: 220px;
-            height: 100%; background: #1e1e1e;
-            z-index: 100; transition: right 0.3s ease;
+            width: 20%; min-width: 220px; height: 100%;
+            background: #1e1e1e; z-index: 100; transition: right 0.3s ease;
             padding: 20px 10px; display: flex; flex-direction: column; gap: 15px;
             box-shadow: -2px 0 10px rgba(0,0,0,0.5);
         }
@@ -41,7 +38,6 @@
         }
         .sidebar-btn:hover, .sidebar-btn.active-tab { background: #00e676; color: #000; font-weight: bold; }
 
-        /* PAGINA ACCESSO / LOGIN */
         .auth-container {
             max-width: 400px; margin: 80px auto; padding: 25px;
             background: #1e1e1e; border-radius: 12px; text-align: center;
@@ -55,22 +51,15 @@
             border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;
         }
 
-        /* STRUTTURA APPLICAZIONE */
         .app-container { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }
         .section { display: none; }
         .section.active { display: block; }
 
-        /* SEZIONE LIVE */
         .live-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media(min-width: 768px) { .live-grid { grid-template-columns: 2fr 1fr; } }
         
-        .player-card {
-            background: #1e1e1e; padding: 20px; border-radius: 12px; text-align: center;
-        }
-        .player-img { width: 120px; height: 120px; border-radius: 50%; background: #333; margin: 0 auto 10px; object-fit: cover; }
-        .bidding-box {
-            display: flex; gap: 10px; justify-content: center; align-items: center; margin: 15px 0;
-        }
+        .player-card { background: #1e1e1e; padding: 20px; border-radius: 12px; text-align: center; }
+        .bidding-box { display: flex; gap: 10px; justify-content: center; align-items: center; margin: 15px 0; }
         .bidding-box input {
             width: 80px; padding: 10px; text-align: center; border-radius: 6px;
             border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 1.1rem;
@@ -85,20 +74,12 @@
         .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .chat-msg { background: #2a2a2a; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* SEARCH BAR & DATALIST */
         .search-bar, .filter-select {
             width: 100%; padding: 10px; border-radius: 6px;
             border: 1px solid #333; background: #2a2a2a; color: #fff; margin-bottom: 15px;
         }
         .filters-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        
-        .upload-box {
-            background: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 15px;
-            border: 1px dashed #00e676; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
-        }
-        .file-input-wrapper { display: flex; align-items: center; gap: 10px; }
 
-        /* LISTONE E ROSA */
         .list-item {
             background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 8px;
             display: flex; justify-content: space-between; align-items: center;
@@ -116,13 +97,11 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
     <header>
         <div class="logo">FantaAsta Live ⚽</div>
         <div class="hamburger" onclick="toggleMenu()">☰</div>
     </header>
 
-    <!-- OVERLAY & SIDEBAR -->
     <div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="sidebar" id="sidebar">
         <h3 style="margin-bottom: 10px; font-size: 0.9rem;">MENU</h3>
@@ -131,59 +110,53 @@
         <button class="sidebar-btn" onclick="switchTab('rosa', event)">🛡️ La Mia Rosa</button>
     </div>
 
-    <!-- 1. SCHERMATA LOGIN / CREAZIONE STANZA -->
+    <!-- ACCESSO / STANZA -->
     <div class="auth-container" id="auth-section">
         <h2>FantaAsta</h2>
-        <p style="color: #aaa; font-size: 0.85rem; margin-top: 5px;">Accedi per partecipare all'asta</p>
+        <p style="color: #aaa; font-size: 0.85rem; margin-top: 5px;">Accedi o crea una stanza per iniziare</p>
         <br>
-        <input type="text" id="username-input" placeholder="Il tuo Nome / Nome Squadra">
-        <input type="text" id="room-input" placeholder="Codice Stanza (es. X7A9B)">
+        <input type="text" id="username-input" placeholder="Il tuo Nome / Squadra">
+        <input type="text" id="room-input" placeholder="Codice Stanza (es. STANZA1)">
         <button class="btn" onclick="joinRoom()">Unisciti alla Stanza</button>
         <div style="margin: 15px 0; color: #666;">Oppure</div>
         <button class="btn" style="background: #333; color: white;" onclick="createRoom()">Crea Nuova Stanza</button>
     </div>
 
-    <!-- 2. CONTENUTO APPLICAZIONE -->
+    <!-- APPLICAZIONE -->
     <div class="app-container" id="app-section">
         
-        <!-- SEZIONE 1: LIVE ASTA -->
+        <!-- SEZIONE LIVE -->
         <div id="live" class="section active">
-            <input type="text" class="search-bar" id="live-search-input" list="players-datalist" placeholder="🔍 Cerca e chiama giocatore..." onchange="selectPlayerToAuction()" onkeydown="handleSearchKeyPress(event)">
+            <input type="text" class="search-bar" id="live-search-input" list="players-datalist" placeholder="🔍 Cerca e chiama un giocatore..." onchange="selectPlayerToAuction()" onkeydown="if(event.key==='Enter') selectPlayerToAuction()">
             <datalist id="players-datalist"></datalist>
             
             <div class="live-grid">
-                <!-- Giocatore In Asta -->
                 <div class="player-card">
-                    <img src="https://via.placeholder.com/120" alt="Giocatore" class="player-img" id="player-img">
-                    <h2 id="player-name">Seleziona un giocatore</h2>
-                    <p style="color: #aaa;" id="player-team">Usa la barra sopra per chiamare in asta</p>
+                    <h2 id="player-name">Nessun Giocatore In Asta</h2>
+                    <p style="color: #aaa;" id="player-team">Seleziona un giocatore dalla barra in alto per iniziare</p>
                     
                     <div class="credits-display">
-                        Offerta Corrente: <b id="current-bid" style="color: #00e676;">1 FM</b>
+                        Offerta Corrente: <b id="current-bid" style="color: #00e676;">0 FM</b>
                         <br>
-                        <small style="font-size: 0.8rem; color: #888;">Offerto da: <span id="highest-bidder">Nessuno</span></small>
+                        <small style="font-size: 0.8rem; color: #888;">Miglior Offerente: <span id="highest-bidder">Nessuno</span></small>
                     </div>
 
-                    <!-- Controlli Puntata -->
                     <div class="bidding-box">
                         <button class="btn btn-plus" onclick="incrementBid()">+</button>
                         <input type="number" id="bid-input" value="1" min="1">
-                        <button class="btn" style="width: auto; padding: 10px 15px;" onclick="placeBid()">Punta</button>
+                        <button class="btn" style="width: auto; padding: 10px 15px;" onclick="placeBid()">Offri</button>
                     </div>
 
                     <button class="btn" style="background: #ffb74d; color: #000; margin-bottom: 10px;" onclick="assignPlayer()">Aggiudica a me</button>
 
                     <div class="credits-display" style="font-size: 0.9rem;">
-                        I tuoi Fantacrediti rimasti: <b id="my-credits" style="color: #00e676;">500</b>
+                        Crediti Rimasti: <b id="my-credits" style="color: #00e676;">500</b> FM
                     </div>
                 </div>
 
-                <!-- Chat Live -->
                 <div class="chat-box">
-                    <h4 style="margin-bottom: 8px;">Chat Asta</h4>
-                    <div class="chat-messages" id="chat-messages">
-                        <div class="chat-msg"><b>Sistema:</b> Stanza creata. Inizia l'asta!</div>
-                    </div>
+                    <h4 style="margin-bottom: 8px;">Chat Stanza</h4>
+                    <div class="chat-messages" id="chat-messages"></div>
                     <div style="display: flex; gap: 5px;">
                         <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff;" onkeydown="if(event.key==='Enter') sendChat()">
                         <button class="btn" style="width: auto; padding: 8px 12px;" onclick="sendChat()">Invia</button>
@@ -192,18 +165,8 @@
             </div>
         </div>
 
-        <!-- SEZIONE 2: LISTONE GIOCATORI -->
+        <!-- SEZIONE LISTONE -->
         <div id="listone" class="section">
-            
-            <div class="upload-box">
-                <div class="file-input-wrapper">
-                    <label style="font-size: 0.9rem; font-weight: bold; color: #00e676;">Aggiorna Listone (Opzionale CSV/JSON):</label>
-                    <input type="file" id="file-input" accept=".csv, .json, .txt" style="display:none" onchange="handleFileUpload(event)">
-                    <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onclick="document.getElementById('file-input').click()">📁 Scegli File</button>
-                </div>
-                <button class="btn" style="width: auto; padding: 6px 12px; background: #444; color: #fff; font-size: 0.85rem;" onclick="resetDefaultListone()">Ripristina Listone Predefinito</button>
-            </div>
-
             <input type="text" class="search-bar" id="search-listone" placeholder="🔍 Cerca per nome o squadra..." onkeyup="filterListone()">
             
             <div class="filters-container">
@@ -223,7 +186,7 @@
             <div id="listone-container"></div>
         </div>
 
-        <!-- SEZIONE 3: LA MIA ROSA -->
+        <!-- SEZIONE ROSA -->
         <div id="rosa" class="section">
             <h2>La Mia Rosa</h2>
             <p style="color:#aaa; margin-bottom: 15px;">Totale speso: <span id="total-spent" style="color:#00e676">0</span> FM</p>
@@ -243,10 +206,18 @@
 
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+
     <script>
-        // --- LISTONE PERMANENTE INTEGRATO (563 GIOCATORI) ---
-        const defaultPlayers = [
-            // PORTIERE (69)
+        const socket = io();
+        let currentUser = "";
+        let currentRoom = "";
+        let activePlayer = null;
+        let myCredits = 500;
+        let myTeam = { P: [], D: [], C: [], A: [] };
+
+        const playersList = [
+          // PORTIERE (69)
             {"name": "SVILAR", "team": "ROM", "role": "P", "fvm": 23},
             {"name": "CARNESECCHI", "team": "ATA", "role": "P", "fvm": 21},
             {"name": "MAIGNAN", "team": "MIL", "role": "P", "fvm": 20},
@@ -818,284 +789,202 @@
             {"name": "PEJICIC", "team": "UDI", "role": "A", "fvm": 0}
         ];
 
-        // --- STATO APPLICAZIONE ---
-        let myCredits = 500;
-        let totalSpent = 0;
-        let currentBid = 1;
-        let currentPlayer = null;
-        let mySquad = { P: [], D: [], C: [], A: [] };
-        let playersList = [...defaultPlayers];
-
-        // --- RICONOSCIMENTO RUOLO ---
-        function parseRole(rawRole) {
-            if (!rawRole) return null;
-            const str = rawRole.toString().trim().toUpperCase().replace(/[^A-Z]/g, '');
-            if (['P', 'POR', 'PORTIERE'].includes(str) || str.startsWith('POR')) return 'P';
-            if (['D', 'DIF', 'DIFENSORE'].includes(str) || str.startsWith('DIF')) return 'D';
-            if (['C', 'CEN', 'CENTROCAMPISTA'].includes(str) || str.startsWith('CEN')) return 'C';
-            if (['A', 'ATT', 'ATTACCANTE'].includes(str) || str.startsWith('ATT')) return 'A';
-            return null;
-        }
-
-        // --- GESTIONE MENU SIDEBAR ---
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
         }
 
-        function switchTab(tabId, evt) {
+        function switchTab(tabId, event) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.sidebar-btn').forEach(el => el.classList.remove('active-tab'));
             
             document.getElementById(tabId).classList.add('active');
-            if(evt) evt.target.classList.add('active-tab');
+            if(event) event.target.classList.add('active-tab');
             toggleMenu();
         }
 
-        // --- ACCESSO E CREAZIONE STANZA ---
-        function generateRoomCode() {
-            return Math.random().toString(36).substring(2, 7).toUpperCase();
-        }
-
         function createRoom() {
-            const code = generateRoomCode();
+            const code = Math.random().toString(36).substring(2, 7).toUpperCase();
             document.getElementById('room-input').value = code;
-            alert("Codice stanza generato: " + code + "\nCondividilo con i tuoi amici!");
+            joinRoom();
         }
 
         function joinRoom() {
-            const user = document.getElementById('username-input').value;
-            const room = document.getElementById('room-input').value;
-            if(!user || !room) {
-                alert("Inserisci sia il nome utente che il codice stanza!");
+            currentUser = document.getElementById('username-input').value.trim();
+            currentRoom = document.getElementById('room-input').value.trim();
+
+            if (!currentUser || !currentRoom) {
+                alert("Inserisci un nome utente e un codice stanza valido!");
                 return;
             }
+
+            // Invio evento join_room in linea con server.js
+            socket.emit('join_room', { username: currentUser, roomCode: currentRoom });
+
             document.getElementById('auth-section').style.display = 'none';
             document.getElementById('app-section').style.display = 'block';
-            filterListone();
-            updateDatalist();
+
+            populateDatalist();
+            renderListone(playersList);
         }
 
-        // --- AUTOCOMPLETE DATALIST ---
-        function updateDatalist() {
+        function populateDatalist() {
             const datalist = document.getElementById('players-datalist');
-            datalist.innerHTML = "";
+            datalist.innerHTML = '';
             playersList.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.name;
-                option.label = `${p.team} (${p.role}) - FVM: ${p.fvm}`;
-                datalist.appendChild(option);
+                const opt = document.createElement('option');
+                opt.value = `${p.name} (${p.team}) - ${p.role}`;
+                datalist.appendChild(opt);
             });
         }
 
-        // --- SELEZIONE E CHIAMATA GIOCATORE IN ASTA ---
         function selectPlayerToAuction() {
-            const inputVal = document.getElementById('live-search-input').value.trim();
-            const found = playersList.find(p => p.name.toLowerCase() === inputVal.toLowerCase());
-
+            const val = document.getElementById('live-search-input').value;
+            const found = playersList.find(p => `${p.name} (${p.team}) - ${p.role}` === val);
             if (found) {
-                currentPlayer = found;
-                document.getElementById('player-name').innerText = found.name;
-                
-                const roleMap = { 'P': 'Portiere', 'D': 'Difensore', 'C': 'Centrocampista', 'A': 'Attaccante' };
-                const roleName = roleMap[found.role] || found.role;
-                
-                document.getElementById('player-team').innerText = `${found.team} - ${roleName} (${found.role}) - FVM: ${found.fvm}`;
-                
-                currentBid = 1;
-                document.getElementById('current-bid').innerText = "1 FM";
-                document.getElementById('bid-input').value = "1";
-                document.getElementById('highest-bidder').innerText = "Nessuno";
-
-                addChatMessage("Sistema", `📣 Chiamato in asta: ${found.name} (${found.team}) - ${found.role}`);
-                document.getElementById('live-search-input').value = "";
+                // Invia la chiamata come prima offerta a 1 FM
+                socket.emit('place_bid', {
+                    roomCode: currentRoom,
+                    player: found,
+                    bid: 1,
+                    bidder: currentUser
+                });
+                document.getElementById('live-search-input').value = '';
             }
         }
 
-        function handleSearchKeyPress(event) {
-            if (event.key === 'Enter') {
-                selectPlayerToAuction();
-            }
-        }
-
-        // --- OPZIONALE: CARICAMENTO FILE ESTERNO ---
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    if (file.name.endsWith('.json')) {
-                        playersList = JSON.parse(e.target.result);
-                    } else {
-                        const lines = e.target.result.split(/\r?\n/);
-                        const parsed = [];
-                        lines.forEach(line => {
-                            const parts = line.split(/[;,]/).map(p => p.trim());
-                            if (parts.length >= 3) {
-                                const role = parseRole(parts[2]) || parseRole(parts[0]);
-                                if (role) {
-                                    parsed.push({
-                                        name: parts[0],
-                                        team: parts[1] || "-",
-                                        role: role,
-                                        fvm: parseInt(parts[3]) || 1
-                                    });
-                                }
-                            }
-                        });
-                        if (parsed.length > 0) playersList = parsed;
-                    }
-                    alert(`Listone aggiornato con ${playersList.length} giocatori!`);
-                    filterListone();
-                    updateDatalist();
-                } catch(err) {
-                    alert("Errore nel formato del file.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function resetDefaultListone() {
-            playersList = [...defaultPlayers];
-            filterListone();
-            updateDatalist();
-            alert("Listone ripristinato al predefinito (563 giocatori).");
-        }
-
-        // --- LOGICA ASTA E PUNTATE ---
         function incrementBid() {
-            let input = document.getElementById('bid-input');
-            input.value = parseInt(input.value) + 1;
+            const currentBidText = document.getElementById('current-bid').innerText;
+            const currentBid = parseInt(currentBidText) || 0;
+            const input = document.getElementById('bid-input');
+            input.value = Math.max(currentBid + 1, parseInt(input.value || 0) + 1);
         }
 
         function placeBid() {
-            if (!currentPlayer) {
-                alert("Seleziona prima un giocatore da chiamare in asta!");
+            if (!activePlayer) {
+                alert("Nessun giocatore attualmente in asta!");
                 return;
             }
-            let val = parseInt(document.getElementById('bid-input').value);
-            if (val > myCredits) {
-                alert("Non hai abbastanza crediti!");
-                return;
-            }
-            if(val > currentBid) {
-                currentBid = val;
-                document.getElementById('current-bid').innerText = currentBid + " FM";
-                document.getElementById('highest-bidder').innerText = document.getElementById('username-input').value;
-                addChatMessage("Sistema", document.getElementById('username-input').value + " ha offerto " + currentBid + " FM!");
-            } else {
+
+            const bid = parseInt(document.getElementById('bid-input').value);
+            const currentBid = parseInt(document.getElementById('current-bid').innerText) || 0;
+
+            if (bid <= currentBid) {
                 alert("L'offerta deve essere superiore a quella attuale!");
+                return;
             }
+
+            if (bid > myCredits) {
+                alert("Non hai abbastanza fantacrediti!");
+                return;
+            }
+
+            socket.emit('place_bid', {
+                roomCode: currentRoom,
+                player: activePlayer,
+                bid: bid,
+                bidder: currentUser
+            });
         }
 
         function assignPlayer() {
-            if (!currentPlayer) {
-                alert("Nessun giocatore in asta!");
-                return;
+            if (!activePlayer) return;
+            const finalBid = parseInt(document.getElementById('current-bid').innerText);
+            const winner = document.getElementById('highest-bidder').innerText;
+
+            if (winner === currentUser) {
+                myCredits -= finalBid;
+                document.getElementById('my-credits').innerText = myCredits;
+                myTeam[activePlayer.role].push({ name: activePlayer.name, price: finalBid });
+                updateMyRosaUI();
+                alert(`Complimenti! Hai acquistato ${activePlayer.name} per ${finalBid} FM!`);
+            } else {
+                alert(`${activePlayer.name} è stato aggiudicato a ${winner}!`);
             }
-            const user = document.getElementById('username-input').value;
-            const highestBidder = document.getElementById('highest-bidder').innerText;
-
-            if (highestBidder !== user) {
-                alert("Devi effettuare l'offerta più alta per aggiudicarti il giocatore!");
-                return;
-            }
-
-            myCredits -= currentBid;
-            totalSpent += currentBid;
-
-            mySquad[currentPlayer.role].push({ name: currentPlayer.name, team: currentPlayer.team, price: currentBid });
-
-            document.getElementById('my-credits').innerText = myCredits;
-            document.getElementById('total-spent').innerText = totalSpent;
-
-            addChatMessage("Sistema", `🎉 ${currentPlayer.name} acquistato da ${user} per ${currentBid} FM!`);
-            updateRosaUI();
-
-            currentPlayer = null;
-            document.getElementById('player-name').innerText = "Seleziona un giocatore";
-            document.getElementById('player-team').innerText = "Usa la barra sopra per chiamare in asta";
-            currentBid = 1;
-            document.getElementById('current-bid').innerText = "1 FM";
-            document.getElementById('bid-input').value = "1";
-            document.getElementById('highest-bidder').innerText = "Nessuno";
         }
 
-        // --- CHAT ---
         function sendChat() {
-            let input = document.getElementById('chat-input');
-            let user = document.getElementById('username-input').value;
-            if(input.value.trim() !== "") {
-                addChatMessage(user, input.value);
-                input.value = "";
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (text) {
+                socket.emit('send_message', {
+                    roomCode: currentRoom,
+                    sender: currentUser,
+                    text: text
+                });
+                input.value = '';
             }
         }
 
-        function addChatMessage(sender, msg) {
-            let container = document.getElementById('chat-messages');
-            let div = document.createElement('div');
-            div.className = 'chat-msg';
-            div.innerHTML = `<b>${sender}:</b> ${msg}`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // --- FILTRAGGIO LISTONE ---
-        function filterListone() {
-            const search = document.getElementById('search-listone').value.toLowerCase().trim();
-            const roleFilter = document.getElementById('filter-role').value;
-            const sortOrder = document.getElementById('sort-order').value;
-
-            let filtered = playersList.filter(p => {
-                const matchesName = p.name.toLowerCase().includes(search) || p.team.toLowerCase().includes(search);
-                const matchesRole = (roleFilter === 'ALL') || (p.role === roleFilter);
-                return matchesName && matchesRole;
-            });
-
-            if (sortOrder === 'alpha') {
-                filtered.sort((a, b) => a.name.localeCompare(b.name));
-            } else if (sortOrder === 'credits') {
-                filtered.sort((a, b) => b.fvm - a.fvm);
+        // RECEIVER DA SERVER.JS
+        socket.on('update_bid', (data) => {
+            if (data && data.player) {
+                activePlayer = data.player;
+                document.getElementById('player-name').innerText = data.player.name;
+                document.getElementById('player-team').innerText = `${data.player.team} - Ruolo: ${data.player.role} (FVM: ${data.player.fvm})`;
+                document.getElementById('current-bid').innerText = `${data.bid} FM`;
+                document.getElementById('highest-bidder').innerText = data.bidder;
+                document.getElementById('bid-input').value = data.bid + 1;
             }
+        });
 
+        socket.on('chat_message', (data) => {
+            const box = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = 'chat-msg';
+            msg.innerHTML = `<b>${data.sender}:</b> ${data.text}`;
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+        });
+
+        function renderListone(list) {
             const container = document.getElementById('listone-container');
-            container.innerHTML = "";
-
-            if (filtered.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">Nessun giocatore trovato con questi filtri.</div>';
-                return;
-            }
-
-            filtered.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
+            container.innerHTML = '';
+            list.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
                     <div>
                         <span class="role-badge role-${p.role}">${p.role}</span>
-                        <b>${p.name}</b> <small style="color:#aaa">(${p.team})</small>
+                        <b>${p.name}</b> <small>(${p.team})</small>
                     </div>
-                    <div>FVM: <b>${p.fvm}</b> FM</div>
+                    <div><b>${p.fvm} FM</b></div>
                 `;
-                container.appendChild(div);
+                container.appendChild(item);
             });
         }
 
-        function updateRosaUI() {
+        function filterListone() {
+            const query = document.getElementById('search-listone').value.toLowerCase();
+            const role = document.getElementById('filter-role').value;
+            const sort = document.getElementById('sort-order').value;
+
+            let filtered = playersList.filter(p => {
+                const matchQuery = p.name.toLowerCase().includes(query) || p.team.toLowerCase().includes(query);
+                const matchRole = (role === 'ALL' || p.role === role);
+                return matchQuery && matchRole;
+            });
+
+            if (sort === 'credits') filtered.sort((a,b) => b.fvm - a.fvm);
+            else if (sort === 'alpha') filtered.sort((a,b) => a.name.localeCompare(b.name));
+
+            renderListone(filtered);
+        }
+
+        function updateMyRosaUI() {
+            let totalSpent = 0;
             ['P', 'D', 'C', 'A'].forEach(role => {
-                const container = document.getElementById(`rosa-${role.toLowerCase()}`);
-                if (mySquad[role].length === 0) {
-                    container.innerHTML = '<i>Nessun giocatore acquistato</i>';
+                const box = document.getElementById(`rosa-${role.toLowerCase()}`);
+                if (myTeam[role].length === 0) {
+                    box.innerHTML = '<i>Nessun giocatore acquistato</i>';
                 } else {
-                    container.innerHTML = mySquad[role].map(p => `
-                        <div class="list-item">
-                            <div><b>${p.name}</b> <small style="color:#aaa">(${p.team})</small></div>
-                            <div style="color:#00e676"><b>${p.price} FM</b></div>
-                        </div>
-                    `).join('');
+                    box.innerHTML = myTeam[role].map(p => {
+                        totalSpent += p.price;
+                        return `<div class="list-item"><span><b>${p.name}</b></span><span>${p.price} FM</span></div>`;
+                    }).join('');
                 }
             });
+            document.getElementById('total-spent').innerText = totalSpent;
         }
     </script>
 </body>
