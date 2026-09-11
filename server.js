@@ -7,25 +7,27 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Serve i file dalla directory corrente (stessa cartella di server.js)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Oggetto per memorizzare lo stato di ogni stanza (giocatore corrente, offerta, messaggi)
+// Stato in memoria per ogni stanza
 const rooms = {};
 
 io.on('connection', (socket) => {
 
+    // Ingresso in una stanza
     socket.on('join_room', ({ username, roomCode }) => {
         if (!roomCode) return;
         
-        // Pulizia del codice stanza (rimuove spazi e rende tutto minuscolo)
         const cleanRoom = roomCode.trim().toLowerCase();
         
         socket.join(cleanRoom);
-        socket.currentRoom = cleanRoom; // Associa la stanza al socket
+        socket.currentRoom = cleanRoom;
+        socket.username = username;
 
         // Inizializza la stanza se non esiste ancora
         if (!rooms[cleanRoom]) {
@@ -35,44 +37,53 @@ io.on('connection', (socket) => {
             };
         }
 
-        // Avvisa la stanza del nuovo utente
+        // Notifica l'ingresso del nuovo utente
         const sysMsg = { sender: 'Sistema', text: `${username} è entrato nella stanza!` };
         rooms[cleanRoom].messages.push(sysMsg);
         io.to(cleanRoom).emit('chat_message', sysMsg);
 
-        // INVIO STATO ATTUALE AL NUOVO DISPOSITIVO CONNESSO:
-        // Mandiamo l'ultima chiamata/offerta attiva se presente
+        // Sincronizza lo stato corrente dell'asta se c'è un'offerta attiva
         if (rooms[cleanRoom].currentBid) {
             socket.emit('update_bid', rooms[cleanRoom].currentBid);
         }
     });
 
+    // Chiamata giocatore o rilancio offerta
     socket.on('place_bid', (data) => {
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
         if (!roomCode) return;
 
-        // Aggiorna e salva la chiamata corrente nello stato della stanza
+        // Salva lo stato corrente
         if (rooms[roomCode]) {
             rooms[roomCode].currentBid = data;
         }
 
-        // Invia la chiamata/offerta a TUTTI i dispositivi nella stanza
+        // Invia l'offerta/chiamata aggiornata a tutti i client della stanza
         io.to(roomCode).emit('update_bid', data);
     });
 
+    // Invio messaggi di chat
     socket.on('send_message', (data) => {
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
         if (!roomCode) return;
 
+        const chatData = {
+            sender: data.sender || socket.username || 'Anonimo',
+            text: data.text
+        };
+
         if (rooms[roomCode]) {
-            rooms[roomCode].messages.push(data);
+            rooms[roomCode].messages.push(chatData);
         }
 
-        io.to(roomCode).emit('chat_message', data);
+        io.to(roomCode).emit('chat_message', chatData);
     });
 
     socket.on('disconnect', () => {
-        console.log('Un utente si è disconnesso:', socket.id);
+        if (socket.currentRoom && socket.username) {
+            const sysMsg = { sender: 'Sistema', text: `${socket.username} si è disconnesso.` };
+            io.to(socket.currentRoom).emit('chat_message', sysMsg);
+        }
     });
 });
 
