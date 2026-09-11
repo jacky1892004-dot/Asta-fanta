@@ -5,10 +5,9 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { 
-    cors: { origin: "*" } 
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
+// Serve i file dalla directory corrente (stessa cartella di server.js)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
@@ -20,7 +19,7 @@ const rooms = {};
 
 io.on('connection', (socket) => {
 
-    // 1. INGRESSO NELLA STANZA
+    // Ingresso in una stanza
     socket.on('join_room', ({ username, roomCode }) => {
         if (!roomCode || !username) return;
         
@@ -38,23 +37,22 @@ io.on('connection', (socket) => {
             };
         }
 
-        // INVIO STORICO CHAT AL SINGOLO UTENTE APPENA CONNESSO
+        // Invia lo storico dei messaggi al nuovo utente connesso
         socket.emit('chat_history', rooms[cleanRoom].messages);
 
-        // Notifica L'INGRESSO a tutti gli altri utenti
+        // Notifica l'ingresso del nuovo utente
         const sysMsg = { sender: 'Sistema', text: `${socket.username} è entrato nella stanza!` };
         rooms[cleanRoom].messages.push(sysMsg);
         io.to(cleanRoom).emit('chat_message', sysMsg);
 
-        // SINCRONIZZA L'ASTA CORRENTE SE PRESENTE
+        // Sincronizza lo stato corrente dell'asta se c'è un'offerta attiva
         if (rooms[cleanRoom].currentBid) {
             socket.emit('update_bid', rooms[cleanRoom].currentBid);
         }
     });
 
-    // 2. CHIAMATA GIOCATORE O RILANCIO
+    // Chiamata giocatore o rilancio offerta
     socket.on('place_bid', (data) => {
-        // Garantisce di trovare sempre la stanza corretta
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
         if (!roomCode) return;
 
@@ -63,40 +61,50 @@ io.on('connection', (socket) => {
             rooms[roomCode] = { currentBid: null, messages: [] };
         }
 
-        // Prepara l'oggetto bid assicurandosi che contenga chi ha rilanciato/chiamato
+        // Recupera nome utente, nome giocatore e importo offerta
+        const senderName = data.sender || socket.username || 'Anonimo';
+        const playerName = typeof data.player === 'object' ? (data.player.name || 'un giocatore') : (data.player || 'un giocatore');
+        const bidPrice = data.price || data.bid || 1;
+
         const updatedData = {
             ...data,
             roomCode: roomCode,
-            sender: data.sender || socket.username || 'Anonimo'
+            sender: senderName
         };
 
-        // Salva lo stato
+        // Salva lo stato corrente dell'asta
         rooms[roomCode].currentBid = updatedData;
 
-        // INVIA A TUTTI I UTENTI IN NELLA STANZA (compreso il mittente)
+        // 1. Aggiorna la schermata dell'asta su tutti i client
         io.to(roomCode).emit('update_bid', updatedData);
+
+        // 2. Genera il messaggio per la chat e invialo a tutti i dispositivi
+        const bidChatMessage = {
+            sender: 'Sistema',
+            text: `💰 ${senderName} ha offerto ${bidPrice} crediti per ${playerName}!`
+        };
+
+        rooms[roomCode].messages.push(bidChatMessage);
+        io.to(roomCode).emit('chat_message', bidChatMessage);
     });
 
-    // 3. INVIO MESSAGGI CHAT
+    // Invio messaggi di chat manuali
     socket.on('send_message', (data) => {
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
         if (!roomCode) return;
 
         const chatData = {
             sender: data.sender || socket.username || 'Anonimo',
-            text: data.text,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            text: data.text
         };
 
         if (rooms[roomCode]) {
             rooms[roomCode].messages.push(chatData);
         }
 
-        // INVIA A TUTTI NELLA STANZA
         io.to(roomCode).emit('chat_message', chatData);
     });
 
-    // 4. GESTIONE DISCONNESSIONE
     socket.on('disconnect', () => {
         if (socket.currentRoom && socket.username) {
             const sysMsg = { sender: 'Sistema', text: `${socket.username} si è disconnesso.` };
@@ -108,7 +116,5 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server attivo sulla porta ${PORT}`));
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server attivo sulla porta ${PORT}`));
