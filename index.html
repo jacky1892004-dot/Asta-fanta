@@ -148,7 +148,6 @@
         
         <!-- SEZIONE 1: LIVE ASTA -->
         <div id="live" class="section active">
-            <!-- Barra di ricerca con Autocomplete (datalist) -->
             <input type="text" class="search-bar" id="live-search-input" list="players-datalist" placeholder="🔍 Cerca e chiama giocatore..." onchange="selectPlayerToAuction()" onkeydown="handleSearchKeyPress(event)">
             <datalist id="players-datalist"></datalist>
             
@@ -196,7 +195,6 @@
         <!-- SEZIONE 2: LISTONE GIOCATORI -->
         <div id="listone" class="section">
             
-            <!-- SEZIONE CARICAMENTO LISTONE PERSONALIZZATO -->
             <div class="upload-box">
                 <div class="file-input-wrapper">
                     <label style="font-size: 0.9rem; font-weight: bold; color: #00e676;">Carica Listone (CSV / JSON):</label>
@@ -211,14 +209,14 @@
             <div class="filters-container">
                 <select class="filter-select" id="filter-role" onchange="filterListone()">
                     <option value="ALL">Tutti i Ruoli</option>
-                    <option value="P">Portieri</option>
-                    <option value="D">Difensori</option>
-                    <option value="C">Centrocampisti</option>
-                    <option value="A">Attaccanti</option>
+                    <option value="P">Portieri (P)</option>
+                    <option value="D">Difensori (D)</option>
+                    <option value="C">Centrocampisti (C)</option>
+                    <option value="A">Attaccanti (A)</option>
                 </select>
                 <select class="filter-select" id="sort-order" onchange="filterListone()">
-                    <option value="alpha">Ordine Alfabetico</option>
                     <option value="credits">Ordine Fantacrediti (FVM)</option>
+                    <option value="alpha">Ordine Alfabetico</option>
                 </select>
             </div>
 
@@ -254,18 +252,29 @@
         let mySquad = { P: [], D: [], C: [], A: [] };
 
         const defaultPlayers = [
-            { name: "Maignan", team: "Milan", role: "P", fvm: 35 },
-            { name: "Sommer", team: "Inter", role: "P", fvm: 30 },
-            { name: "Di Lorenzo", team: "Napoli", role: "D", fvm: 22 },
-            { name: "Dimarco", team: "Inter", role: "D", fvm: 28 },
-            { name: "Barella", team: "Inter", role: "C", fvm: 35 },
-            { name: "Pulisic", team: "Milan", role: "C", fvm: 40 },
             { name: "Lautaro Martinez", team: "Inter", role: "A", fvm: 95 },
             { name: "Vlahovic", team: "Juventus", role: "A", fvm: 80 },
-            { name: "Lookman", team: "Atalanta", role: "A", fvm: 75 }
+            { name: "Lookman", team: "Atalanta", role: "A", fvm: 75 },
+            { name: "Pulisic", team: "Milan", role: "C", fvm: 40 },
+            { name: "Maignan", team: "Milan", role: "P", fvm: 35 },
+            { name: "Barella", team: "Inter", role: "C", fvm: 35 },
+            { name: "Sommer", team: "Inter", role: "P", fvm: 30 },
+            { name: "Dimarco", team: "Inter", role: "D", fvm: 28 },
+            { name: "Di Lorenzo", team: "Napoli", role: "D", fvm: 22 }
         ];
 
         let playersList = [...defaultPlayers];
+
+        // Normalizza qualsiasi testo di ruolo in 'P', 'D', 'C', 'A'
+        function parseRole(rawRole) {
+            if (!rawRole) return 'A';
+            const str = rawRole.toString().trim().toUpperCase();
+            if (str.startsWith('P')) return 'P';
+            if (str.startsWith('D')) return 'D';
+            if (str.startsWith('C')) return 'C';
+            if (str.startsWith('A')) return 'A';
+            return 'A'; // Default se non riconosciuto
+        }
 
         // --- GESTIONE MENU SIDEBAR ---
         function toggleMenu() {
@@ -332,14 +341,13 @@
                 
                 document.getElementById('player-team').innerText = `${found.team} - ${roleName} (${found.role})`;
                 
-                // Reset della chiamata d'asta
                 currentBid = 1;
                 document.getElementById('current-bid').innerText = "1 FM";
                 document.getElementById('bid-input').value = "1";
                 document.getElementById('highest-bidder').innerText = "Nessuno";
 
                 addChatMessage("Sistema", `📣 Chiamato in asta: ${found.name} (${found.team})`);
-                document.getElementById('live-search-input').value = ""; // Pulisce il campo
+                document.getElementById('live-search-input').value = "";
             }
         }
 
@@ -349,7 +357,7 @@
             }
         }
 
-        // --- CARICAMENTO LISTONE PERSONALIZZATO ---
+        // --- CARICAMENTO E PARSING FILE ---
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -360,20 +368,32 @@
                 const content = e.target.result;
                 try {
                     if (file.name.endsWith('.json')) {
-                        playersList = JSON.parse(content);
+                        const parsedJson = JSON.parse(content);
+                        playersList = parsedJson.map(item => ({
+                            name: item.name || item.Nome || "Sconosciuto",
+                            team: item.team || item.Squadra || "-",
+                            role: parseRole(item.role || item.Ruolo),
+                            fvm: parseInt(item.fvm || item.FVM || item.Quotazione) || 1
+                        }));
                     } else {
-                        // CSV / TXT (Nome,Squadra,Ruolo,FVM)
-                        const lines = content.split('\n');
+                        // Supporta sia la virgola (,) che il punto e virgola (;)
+                        const lines = content.split(/\r?\n/);
                         const parsed = [];
                         
                         lines.forEach(line => {
-                            const parts = line.split(',');
+                            if (!line.trim()) return;
+                            const delimiter = line.includes(';') ? ';' : ',';
+                            const parts = line.split(delimiter);
+                            
+                            // Ignora l'eventuale intestazione se contiene parole come "Nome" o "Ruolo"
+                            if (parts[0].toLowerCase().includes("nome") || parts[0].toLowerCase().includes("player")) return;
+
                             if (parts.length >= 4) {
                                 parsed.push({
-                                    name: parts[0].trim(),
-                                    team: parts[1].trim(),
-                                    role: parts[2].trim().toUpperCase(),
-                                    fvm: parseInt(parts[3].trim()) || 1
+                                    name: parts[0].replace(/"/g, '').trim(),
+                                    team: parts[1].replace(/"/g, '').trim(),
+                                    role: parseRole(parts[2].replace(/"/g, '')),
+                                    fvm: parseInt(parts[3].replace(/"/g, '').trim()) || 1
                                 });
                             }
                         });
@@ -381,14 +401,14 @@
                         if (parsed.length > 0) {
                             playersList = parsed;
                         } else {
-                            throw new Error("Formato file non valido");
+                            throw new Error("Formato non valido");
                         }
                     }
                     alert(`Caricati ${playersList.length} giocatori con successo!`);
                     filterListone();
                     updateDatalist();
                 } catch (err) {
-                    alert("Errore nella lettura del file. Assicurati che sia in formato JSON o CSV (Nome,Squadra,Ruolo,FVM).");
+                    alert("Errore nella lettura del file CSV/JSON. Verifica che le colonne siano: Nome, Squadra, Ruolo, FVM.");
                 }
             };
 
@@ -444,7 +464,6 @@
             addChatMessage("Sistema", `🎉 ${currentPlayer.name} acquistato da ${user} per ${currentBid} FM!`);
             updateRosaUI();
 
-            // Reset asta
             currentBid = 1;
             document.getElementById('current-bid').innerText = "1 FM";
             document.getElementById('bid-input').value = "1";
@@ -470,15 +489,15 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // --- DATI LISTONE E ROSA ---
+        // --- FILTRAGGIO LISTONE ---
         function filterListone() {
-            const search = document.getElementById('search-listone').value.toLowerCase();
+            const search = document.getElementById('search-listone').value.toLowerCase().trim();
             const roleFilter = document.getElementById('filter-role').value;
             const sortOrder = document.getElementById('sort-order').value;
 
             let filtered = playersList.filter(p => {
                 const matchesName = p.name.toLowerCase().includes(search) || p.team.toLowerCase().includes(search);
-                const matchesRole = roleFilter === 'ALL' || p.role === roleFilter;
+                const matchesRole = (roleFilter === 'ALL') || (p.role === roleFilter);
                 return matchesName && matchesRole;
             });
 
@@ -490,6 +509,11 @@
 
             const container = document.getElementById('listone-container');
             container.innerHTML = "";
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">Nessun giocatore trovato con questi filtri.</div>';
+                return;
+            }
 
             filtered.forEach(p => {
                 const div = document.createElement('div');
