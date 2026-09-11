@@ -265,15 +265,22 @@
 
         let playersList = [...defaultPlayers];
 
-        // Normalizza qualsiasi testo di ruolo in 'P', 'D', 'C', 'A'
+        // Riconoscimento flessibile ed esaustivo del ruolo
         function parseRole(rawRole) {
-            if (!rawRole) return 'A';
+            if (!rawRole) return null;
             const str = rawRole.toString().trim().toUpperCase();
-            if (str.startsWith('P')) return 'P';
-            if (str.startsWith('D')) return 'D';
-            if (str.startsWith('C')) return 'C';
-            if (str.startsWith('A')) return 'A';
-            return 'A'; // Default se non riconosciuto
+            
+            if (['P', 'POR', 'PORTIERE', 'GOALKEEPER', 'GK'].includes(str) || str.startsWith('POR')) return 'P';
+            if (['D', 'DIF', 'DIFENSORE', 'DEFENDER', 'DEF'].includes(str) || str.startsWith('DIF')) return 'D';
+            if (['C', 'CEN', 'CENTROCAMPISTA', 'MIDFIELDER', 'MID'].includes(str) || str.startsWith('CEN')) return 'C';
+            if (['A', 'ATT', 'ATTACCANTE', 'FORWARD', 'FW', 'STR'].includes(str) || str.startsWith('ATT')) return 'A';
+            
+            if (str.includes('P')) return 'P';
+            if (str.includes('D')) return 'D';
+            if (str.includes('C')) return 'C';
+            if (str.includes('A')) return 'A';
+
+            return null;
         }
 
         // --- GESTIONE MENU SIDEBAR ---
@@ -357,7 +364,7 @@
             }
         }
 
-        // --- CARICAMENTO E PARSING FILE ---
+        // --- CARICAMENTO E PARSING INTELLIGENTE DEL FILE ---
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -370,45 +377,61 @@
                     if (file.name.endsWith('.json')) {
                         const parsedJson = JSON.parse(content);
                         playersList = parsedJson.map(item => ({
-                            name: item.name || item.Nome || "Sconosciuto",
-                            team: item.team || item.Squadra || "-",
-                            role: parseRole(item.role || item.Ruolo),
-                            fvm: parseInt(item.fvm || item.FVM || item.Quotazione) || 1
+                            name: item.name || item.Nome || item.giocatore || "Sconosciuto",
+                            team: item.team || item.Squadra || item.squadra || "-",
+                            role: parseRole(item.role || item.Ruolo || item.ruolo || item.R) || 'A',
+                            fvm: parseInt(item.fvm || item.FVM || item.Quotazione || item.qt) || 1
                         }));
                     } else {
-                        // Supporta sia la virgola (,) che il punto e virgola (;)
                         const lines = content.split(/\r?\n/);
                         const parsed = [];
                         
                         lines.forEach(line => {
                             if (!line.trim()) return;
                             const delimiter = line.includes(';') ? ';' : ',';
-                            const parts = line.split(delimiter);
+                            const parts = line.split(delimiter).map(p => p.replace(/"/g, '').trim());
                             
-                            // Ignora l'eventuale intestazione se contiene parole come "Nome" o "Ruolo"
-                            if (parts[0].toLowerCase().includes("nome") || parts[0].toLowerCase().includes("player")) return;
+                            // Ignora riga d'intestazione
+                            const lineStr = line.toLowerCase();
+                            if (lineStr.includes("nome") && (lineStr.includes("ruolo") || lineStr.includes("squadra"))) return;
 
                             if (parts.length >= 4) {
-                                parsed.push({
-                                    name: parts[0].replace(/"/g, '').trim(),
-                                    team: parts[1].replace(/"/g, '').trim(),
-                                    role: parseRole(parts[2].replace(/"/g, '')),
-                                    fvm: parseInt(parts[3].replace(/"/g, '').trim()) || 1
+                                let name = "", team = "", role = null, fvm = 1;
+
+                                // Identificazione automatica delle colonne
+                                parts.forEach(part => {
+                                    const detectedRole = parseRole(part);
+                                    if (detectedRole && !role && part.length <= 12) {
+                                        role = detectedRole;
+                                    } else if (!isNaN(parseInt(part)) && parseInt(part) > 0 && fvm === 1) {
+                                        fvm = parseInt(part);
+                                    } else if (!name) {
+                                        name = part;
+                                    } else if (!team) {
+                                        team = part;
+                                    }
                                 });
+
+                                // Fallback all'ordine standard se il parsing dinamico fallisce
+                                if (!role) role = parseRole(parts[2]) || parseRole(parts[0]) || 'A';
+                                if (!name) name = parts[0];
+                                if (!team) team = parts[1];
+
+                                parsed.push({ name, team, role, fvm });
                             }
                         });
 
                         if (parsed.length > 0) {
                             playersList = parsed;
                         } else {
-                            throw new Error("Formato non valido");
+                            throw new Error("Impossibile leggere il file CSV.");
                         }
                     }
                     alert(`Caricati ${playersList.length} giocatori con successo!`);
                     filterListone();
                     updateDatalist();
                 } catch (err) {
-                    alert("Errore nella lettura del file CSV/JSON. Verifica che le colonne siano: Nome, Squadra, Ruolo, FVM.");
+                    alert("Errore nella lettura del file. Assicurati che sia in formato CSV o JSON.");
                 }
             };
 
