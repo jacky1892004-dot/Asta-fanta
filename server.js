@@ -69,7 +69,8 @@ io.on('connection', (socket) => {
         const updatedData = {
             ...data,
             roomCode: roomCode,
-            sender: senderName
+            sender: senderName,
+            lastBidder: senderName // Identifica l'ultimo utente ad aver offerto
         };
 
         // Salva lo stato corrente dell'asta
@@ -86,6 +87,35 @@ io.on('connection', (socket) => {
 
         rooms[roomCode].messages.push(bidChatMessage);
         io.to(roomCode).emit('chat_message', bidChatMessage);
+    });
+
+    // Aggiudicazione del giocatore
+    socket.on('assign_player', (data) => {
+        const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
+        if (!roomCode) return;
+
+        const winner = data.winner || socket.username || 'Anonimo';
+        const playerName = typeof data.player === 'object' ? (data.player.name || 'un giocatore') : (data.player || 'un giocatore');
+        const price = data.price || (rooms[roomCode]?.currentBid?.price) || 1;
+
+        // Resetta l'asta corrente per la stanza
+        if (rooms[roomCode]) {
+            rooms[roomCode].currentBid = null;
+        }
+
+        // Notifica la chat dell'aggiudicazione
+        const winMsg = {
+            sender: 'Sistema',
+            text: `🎉 ${playerName} è stato aggiudicato a ${winner} per ${price} crediti!`
+        };
+
+        if (rooms[roomCode]) {
+            rooms[roomCode].messages.push(winMsg);
+        }
+
+        io.to(roomCode).emit('chat_message', winMsg);
+        // Resetta la scheda asta sui client
+        io.to(roomCode).emit('update_bid', null);
     });
 
     // Invio messaggi di chat manuali
