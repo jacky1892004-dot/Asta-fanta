@@ -7,131 +7,129 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Serve i file dalla directory corrente (stessa cartella di server.js)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Stato in memoria per ogni stanza
+// Stato centralizzato salvato in memoria sul server
 const rooms = {};
 
 io.on('connection', (socket) => {
 
-    // Ingresso in una stanza
     socket.on('join_room', ({ username, roomCode }) => {
         if (!roomCode || !username) return;
         
         const cleanRoom = roomCode.trim().toLowerCase();
+        const cleanUser = username.trim();
         
         socket.join(cleanRoom);
         socket.currentRoom = cleanRoom;
-        socket.username = username.trim();
+        socket.username = cleanUser;
 
-        // Inizializza la stanza se non esiste ancora
         if (!rooms[cleanRoom]) {
             rooms[cleanRoom] = {
+                users: {},       // { username: { credits: 500, team: { P:[], D:[], C:[], A:[] } } }
                 currentBid: null,
                 messages: []
             };
         }
 
-        // Invia lo storico dei messaggi al nuovo utente connesso
-        socket.emit('chat_history', rooms[cleanRoom].messages);
+        const room = rooms[cleanRoom];
 
-        // Notifica l'ingresso del nuovo utente
-        const sysMsg = { sender: 'Sistema', text: `${socket.username} è entrato nella stanza!` };
-        rooms[cleanRoom].messages.push(sysMsg);
-        io.to(cleanRoom).emit('chat_message', sysMsg);
-
-        // Sincronizza lo stato corrente dell'asta se c'è un'offerta attiva
-        if (rooms[cleanRoom].currentBid) {
-            socket.emit('update_bid', rooms[cleanRoom].currentBid);
+        // Se l'utente non esisteva nella stanza, lo inizializziamo
+        if (!room.users[cleanUser]) {
+            room.users[cleanUser] = {
+                credits: 500,
+                team: { P: [], D: [], C: [], A: [] }
+            };
         }
+
+        const sysMsg = { sender: 'Sistema', text: `${cleanUser} è entrato nella stanza!` };
+        room.messages.push(sysMsg);
+
+        // Sincronizza lo stato completo dell'utente che è appena (ri)entrato
+        socket.emit('sync_user_state', {
+            userData: room.users[cleanUser],
+            currentBid: room.currentBid,
+            messages: room.messages
+        });
+
+        // Notifica gli altri utenti dell'ingresso e trasmette la chat
+        socket.to(cleanRoom).emit('chat_message', sysMsg);
     });
 
-    // Chiamata giocatore o rilancio offerta
     socket.on('place_bid', (data) => {
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
-        if (!roomCode) return;
+        if (!roomCode || !rooms[roomCode]) return;
 
-        // Assicura l'esistenza della stanza
-        if (!rooms[roomCode]) {
-            rooms[roomCode] = { currentBid: null, messages: [] };
+        const room = rooms[roomCode];
+        
+        // Controlla validità crediti dell'utente
+        const userState = room.users[data.bidder];
+        if (userState && data.bid > userState.credits) {
+            socket.emit('error_message', 'Non hai abbastanza fantacrediti per questa offerta!');
+            return;
         }
 
-        // Recupera nome utente, nome giocatore e importo offerta
-        const senderName = data.sender || socket.username || 'Anonimo';
-        const playerName = typeof data.player === 'object' ? (data.player.name || 'un giocatore') : (data.player || 'un giocatore');
-        const bidPrice = data.price || data.bid || 1;
-
-        const updatedData = {
-            ...data,
-            roomCode: roomCode,
-            sender: senderName,
-            lastBidder: senderName // Identifica l'ultimo utente ad aver offerto
+        room.currentBid = {
+            player: data.player,
+            bid: data.bid,
+            bidder: data.bidder
         };
 
-        // Salva lo stato corrente dell'asta
-        rooms[roomCode].currentBid = updatedData;
-
-        // 1. Aggiorna la schermata dell'asta su tutti i client
-        io.to(roomCode).emit('update_bid', updatedData);
-
-        // 2. Genera il messaggio per la chat e invialo a tutti i dispositivi
-        const bidChatMessage = {
-            sender: 'Sistema',
-            text: `💰 ${senderName} ha offerto ${bidPrice} crediti per ${playerName}!`
-        };
-
-        rooms[roomCode].messages.push(bidChatMessage);
-        io.to(roomCode).emit('chat_message', bidChatMessage);
+        io.to(roomCode).emit('update_bid', room.currentBid);
     });
 
-    // Aggiudicazione del giocatore
-    socket.on('assign_player', (data) => {
-        const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
-        if (!roomCode) return;
+    socket.on('assign_player', () => {
+        const roomCode = socket.currentRoom;
+        if (!roomCode || !rooms[roomCode]) return;
 
-        const winner = data.winner || socket.username || 'Anonimo';
-        const playerName = typeof data.player === 'object' ? (data.player.name || 'un giocatore') : (data.player || 'un giocatore');
-        const price = data.price || (rooms[roomCode]?.currentBid?.price) || 1;
+        const room = rooms[roomCode];
+        const bidData = room.currentBid;
 
-        // Resetta l'asta corrente per la stanza
-        if (rooms[roomCode]) {
-            rooms[roomCode].currentBid = null;
+        if (!bidData) return;
+
+        // Sicurezza lato server: Solo l'ultimo offerente può aggiudicarsi il giocatore
+        if (bidData.bidder !== socket.username) {
+            socket.emit('error_message', 'Solo chi ha fatto l\'ultima offerta può aggiudicarsi il giocatore!');
+            return;
         }
 
-        // Notifica la chat dell'aggiudicazione
-        const winMsg = {
-            sender: 'Sistema',
-            text: `🎉 ${playerName} è stato aggiudicato a ${winner} per ${price} crediti!`
-        };
+        const winner = room.users[socket.username];
+        if (winner) {
+            winner.credits -= bidData.bid;
+            winner.team[bidData.player.role].push({
+                name: bidData.player.name,
+                price: bidData.bid,
+                team: bidData.player.team
+            });
 
-        if (rooms[roomCode]) {
-            rooms[roomCode].messages.push(winMsg);
+            // Comunica l'assegnazione avvenuta a tutti i client
+            io.to(roomCode).emit('player_assigned', {
+                winner: socket.username,
+                player: bidData.player,
+                price: bidData.bid,
+                userData: winner
+            });
+
+            // Resetta l'asta corrente
+            room.currentBid = null;
+            io.to(roomCode).emit('update_bid', null);
         }
-
-        io.to(roomCode).emit('chat_message', winMsg);
-        // Resetta la scheda asta sui client
-        io.to(roomCode).emit('update_bid', null);
     });
 
-    // Invio messaggi di chat manuali
     socket.on('send_message', (data) => {
         const roomCode = (data.roomCode || socket.currentRoom || '').trim().toLowerCase();
-        if (!roomCode) return;
+        if (!roomCode || !rooms[roomCode]) return;
 
         const chatData = {
-            sender: data.sender || socket.username || 'Anonimo',
+            sender: socket.username || data.sender || 'Anonimo',
             text: data.text
         };
 
-        if (rooms[roomCode]) {
-            rooms[roomCode].messages.push(chatData);
-        }
-
+        rooms[roomCode].messages.push(chatData);
         io.to(roomCode).emit('chat_message', chatData);
     });
 
