@@ -5,27 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FantaAsta Live</title>
     <style>
-            /* Stile base del pulsante "Aggiudica a me" attivo */
-    .btn-aggiudica {
-        background-color: #28a745;
-        color: white;
-        font-weight: bold;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        opacity: 1;
-    }
-
-/* Stile quando il pulsante è disabilitato (oscurato) */
-    .btn-aggiudica:disabled {
-        background-color: #1b4322; /* Colore più scuro/spento */
-        color: #888888;
-        cursor: not-allowed;
-        opacity: 0.5;
-        filter: brightness(0.6);
-    }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #fff; }
 
@@ -70,6 +49,27 @@
         .btn {
             width: 100%; padding: 12px; background: #00e676; color: #000;
             border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;
+        }
+
+        .btn-aggiudica {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-aggiudica:disabled {
+            background-color: #1b4322;
+            color: #888888;
+            cursor: not-allowed;
+            opacity: 0.5;
+            filter: brightness(0.6);
         }
 
         .app-container { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }
@@ -117,7 +117,6 @@
     </style>
 </head>
 <body>
-<button id="btn-aggiudica" class="btn-aggiudica" disabled>Aggiudica a me</button>
     <header>
         <div class="logo">FantaAsta Live ⚽</div>
         <div class="hamburger" onclick="toggleMenu()">☰</div>
@@ -168,7 +167,7 @@
                         <button class="btn" style="width: auto; padding: 10px 15px;" onclick="placeBid()">Offri</button>
                     </div>
 
-                    <button class="btn" style="background: #ffb74d; color: #000; margin-bottom: 10px;" onclick="assignPlayer()">Aggiudica a me</button>
+                    <button id="btn-aggiudica" class="btn-aggiudica" disabled onclick="assignPlayer()">Aggiudica a me</button>
 
                     <div class="credits-display" style="font-size: 0.9rem;">
                         Crediti Rimasti: <b id="my-credits" style="color: #00e676;">500</b> FM
@@ -238,7 +237,7 @@
         let myTeam = { P: [], D: [], C: [], A: [] };
 
         const playersList = [
-          // PORTIERE (69)
+            // PORTIERE (69)
             {"name": "SVILAR", "team": "ROM", "role": "P", "fvm": 23},
             {"name": "CARNESECCHI", "team": "ATA", "role": "P", "fvm": 21},
             {"name": "MAIGNAN", "team": "MIL", "role": "P", "fvm": 20},
@@ -540,7 +539,7 @@
             {"name": "ADZIC", "team": "SAS", "role": "C", "fvm": 11},
             {"name": "CARLOS AUGUSTO", "team": "INT", "role": "C", "fvm": 11},
             {"name": "DIOUF", "team": "INT", "role": "C", "fvm": 11},
-            {"name": "MATIC", "team": "SAS", "role": "C", "fvm": 11},
+            {"name": "STATIC", "team": "SAS", "role": "C", "fvm": 11},
             {"name": "MKHITARYAN", "team": "INT", "role": "C", "fvm": 11},
             {"name": "PESSINA", "team": "MON", "role": "C", "fvm": 11},
             {"name": "POBEGA", "team": "BOL", "role": "C", "fvm": 11},
@@ -839,7 +838,6 @@
                 return;
             }
 
-            // Invio evento join_room in linea con server.js
             socket.emit('join_room', { username: currentUser, roomCode: currentRoom });
 
             document.getElementById('auth-section').style.display = 'none';
@@ -863,7 +861,6 @@
             const val = document.getElementById('live-search-input').value;
             const found = playersList.find(p => `${p.name} (${p.team}) - ${p.role}` === val);
             if (found) {
-                // Invia la chiamata come prima offerta a 1 FM
                 socket.emit('place_bid', {
                     roomCode: currentRoom,
                     player: found,
@@ -888,7 +885,8 @@
             }
 
             const bid = parseInt(document.getElementById('bid-input').value);
-            const currentBid = parseInt(document.getElementById('current-bid').innerText) || 0;
+            const currentBidText = document.getElementById('current-bid').innerText;
+            const currentBid = parseInt(currentBidText) || 0;
 
             if (bid <= currentBid) {
                 alert("L'offerta deve essere superiore a quella attuale!");
@@ -910,18 +908,8 @@
 
         function assignPlayer() {
             if (!activePlayer) return;
-            const finalBid = parseInt(document.getElementById('current-bid').innerText);
-            const winner = document.getElementById('highest-bidder').innerText;
-
-            if (winner === currentUser) {
-                myCredits -= finalBid;
-                document.getElementById('my-credits').innerText = myCredits;
-                myTeam[activePlayer.role].push({ name: activePlayer.name, price: finalBid });
-                updateMyRosaUI();
-                alert(`Complimenti! Hai acquistato ${activePlayer.name} per ${finalBid} FM!`);
-            } else {
-                alert(`${activePlayer.name} è stato aggiudicato a ${winner}!`);
-            }
+            // Richiesta di aggiudicazione inviata al server per verifica
+            socket.emit('assign_player');
         }
 
         function sendChat() {
@@ -937,8 +925,42 @@
             }
         }
 
-        // RECEIVER DA SERVER.JS
+        // EVENTI SOCKET.IO
+
+        // Sincronizzazione dello stato completo dopo disconnessione / rientro
+        socket.on('sync_user_state', (data) => {
+            if (data.userData) {
+                myCredits = data.userData.credits;
+                myTeam = data.userData.team;
+                document.getElementById('my-credits').innerText = myCredits;
+                updateMyRosaUI();
+            }
+
+            if (data.messages) {
+                const box = document.getElementById('chat-messages');
+                box.innerHTML = '';
+                data.messages.forEach(msgData => {
+                    const msg = document.createElement('div');
+                    msg.className = 'chat-msg';
+                    msg.innerHTML = `<b>${msgData.sender}:</b> ${msgData.text}`;
+                    box.appendChild(msg);
+                });
+                box.scrollTop = box.scrollHeight;
+            }
+
+            if (data.currentBid) {
+                updateAuctionUI(data.currentBid);
+            } else {
+                updateAuctionUI(null);
+            }
+        });
+
         socket.on('update_bid', (data) => {
+            updateAuctionUI(data);
+        });
+
+        function updateAuctionUI(data) {
+            const btnAggiudica = document.getElementById('btn-aggiudica');
             if (data && data.player) {
                 activePlayer = data.player;
                 document.getElementById('player-name').innerText = data.player.name;
@@ -946,6 +968,33 @@
                 document.getElementById('current-bid').innerText = `${data.bid} FM`;
                 document.getElementById('highest-bidder').innerText = data.bidder;
                 document.getElementById('bid-input').value = data.bid + 1;
+
+                // Abilita il pulsante "Aggiudica a me" SOLO E SOLTANTO se l'utente corrente è l'ultimo offerente
+                if (data.bidder === currentUser) {
+                    btnAggiudica.disabled = false;
+                } else {
+                    btnAggiudica.disabled = true;
+                }
+            } else {
+                activePlayer = null;
+                document.getElementById('player-name').innerText = "Nessun Giocatore In Asta";
+                document.getElementById('player-team').innerText = "Seleziona un giocatore dalla barra in alto per iniziare";
+                document.getElementById('current-bid').innerText = "0 FM";
+                document.getElementById('highest-bidder').innerText = "Nessuno";
+                document.getElementById('bid-input').value = 1;
+                btnAggiudica.disabled = true;
+            }
+        }
+
+        socket.on('player_assigned', (data) => {
+            if (data.winner === currentUser) {
+                myCredits = data.userData.credits;
+                myTeam = data.userData.team;
+                document.getElementById('my-credits').innerText = myCredits;
+                updateMyRosaUI();
+                alert(`Complimenti! Ti sei aggiudicato ${data.player.name} per ${data.price} FM!`);
+            } else {
+                alert(`${data.player.name} è stato aggiudicato a ${data.winner} per ${data.price} FM!`);
             }
         });
 
@@ -956,6 +1005,10 @@
             msg.innerHTML = `<b>${data.sender}:</b> ${data.text}`;
             box.appendChild(msg);
             box.scrollTop = box.scrollHeight;
+        });
+
+        socket.on('error_message', (msg) => {
+            alert(msg);
         });
 
         function renderListone(list) {
@@ -996,12 +1049,12 @@
             let totalSpent = 0;
             ['P', 'D', 'C', 'A'].forEach(role => {
                 const box = document.getElementById(`rosa-${role.toLowerCase()}`);
-                if (myTeam[role].length === 0) {
+                if (!myTeam[role] || myTeam[role].length === 0) {
                     box.innerHTML = '<i>Nessun giocatore acquistato</i>';
                 } else {
                     box.innerHTML = myTeam[role].map(p => {
                         totalSpent += p.price;
-                        return `<div class="list-item"><span><b>${p.name}</b></span><span>${p.price} FM</span></div>`;
+                        return `<div class="list-item"><span><b>${p.name}</b> <small>(${p.team})</small></span><span>${p.price} FM</span></div>`;
                     }).join('');
                 }
             });
