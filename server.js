@@ -46,7 +46,7 @@ io.on('connection', (socket) => {
             };
         }
 
-        const sysMsg = { sender: 'Sistema', text: `${cleanUser} è entrato nella stanza!` };
+        const sysMsg = { sender: 'Sistema', text: `${cleanUser} è entrato nella stanza!`, isSystem: true };
         room.messages.push(sysMsg);
 
         // Sincronizza lo stato completo dell'utente che è appena (ri)entrato
@@ -56,7 +56,7 @@ io.on('connection', (socket) => {
             messages: room.messages
         });
 
-        // Notifica gli altri utenti dell'ingresso e trasmette la chat
+        // Notifica gli altri utenti dell'ingresso
         socket.to(cleanRoom).emit('chat_message', sysMsg);
     });
 
@@ -79,7 +79,17 @@ io.on('connection', (socket) => {
             bidder: data.bidder
         };
 
+        // 1. Notifica aggiornamento dell'asta a tutti i client
         io.to(roomCode).emit('update_bid', room.currentBid);
+
+        // 2. Registra e invia in chat la notifica del rilancio/offerta
+        const bidMsg = {
+            sender: 'Sistema',
+            text: `📢 ${data.bidder} ha offerto ${data.bid} FM per ${data.player.name} (${data.player.team})!`,
+            isSystem: true
+        };
+        room.messages.push(bidMsg);
+        io.to(roomCode).emit('chat_message', bidMsg);
     });
 
     socket.on('assign_player', () => {
@@ -106,13 +116,22 @@ io.on('connection', (socket) => {
                 team: bidData.player.team
             });
 
-            // Comunica l'assegnazione avvenuta a tutti i client
+            // Comunica l'assegnazione avvenuta
             io.to(roomCode).emit('player_assigned', {
                 winner: socket.username,
                 player: bidData.player,
                 price: bidData.bid,
                 userData: winner
             });
+
+            // Registra e invia in chat la notifica dell'assegnazione ufficiale
+            const assignMsg = {
+                sender: 'Sistema',
+                text: `🎉 UFFICIALE: ${socket.username} si aggiudica ${bidData.player.name} per ${bidData.bid} FM!`,
+                isSystem: true
+            };
+            room.messages.push(assignMsg);
+            io.to(roomCode).emit('chat_message', assignMsg);
 
             // Resetta l'asta corrente
             room.currentBid = null;
@@ -126,7 +145,8 @@ io.on('connection', (socket) => {
 
         const chatData = {
             sender: socket.username || data.sender || 'Anonimo',
-            text: data.text
+            text: data.text,
+            isSystem: false
         };
 
         rooms[roomCode].messages.push(chatData);
@@ -135,7 +155,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         if (socket.currentRoom && socket.username) {
-            const sysMsg = { sender: 'Sistema', text: `${socket.username} si è disconnesso.` };
+            const sysMsg = { sender: 'Sistema', text: `${socket.username} si è disconnesso.`, isSystem: true };
             if (rooms[socket.currentRoom]) {
                 rooms[socket.currentRoom].messages.push(sysMsg);
             }
