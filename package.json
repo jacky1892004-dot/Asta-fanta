@@ -1,6 +1,7 @@
 {
   "name": "fanta-asta-live",
   "version": "1.0.0",
+  "description": "Applicazione real-time per aste fantacalcio con Socket.IO",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
